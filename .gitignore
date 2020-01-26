@@ -7,3 +7,6 @@ pyvenv.cfg
 share
 ggppss*
 *.swp
+.project
+.pydevproject
+
