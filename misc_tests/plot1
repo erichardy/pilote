@@ -1,0 +1,4 @@
+set datafile separator "|"
+set terminal qt
+
+plot "GggppssX-11" u 2:1
