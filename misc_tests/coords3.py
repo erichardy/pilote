@@ -1,4 +1,5 @@
 #!../bin/python
+# -*- coding: utf-8 -*-
 
 # https://mrjean1.github.io/PyGeodesy/
 
