@@ -57,6 +57,3 @@ print("%.5f\t%.5f" % (loxodromy, cAngle))
 
 
 
-
-
-
