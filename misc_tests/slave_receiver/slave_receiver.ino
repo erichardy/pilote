@@ -18,6 +18,8 @@ char c;
 char *str ;
 char msg[6] = {'0','1','2','3','4','5'};
 int i = 0;
+String xheading;
+float heading;
 
 void setup() {
   Serial.begin(9600);
@@ -26,12 +28,13 @@ void setup() {
   
   Wire.begin(8);                // join i2c bus with address #8
   Wire.onReceive(receiveEvent); // register event
-  Wire.onRequest(sendEvent);
+  // NB: la réception déclenche une interruption.
+  // Wire.onRequest(sendEvent);
   Serial.println("i2c init") ;
 }
 
 void loop() {
-  delay(100);
+  delay(2000);
   // Serial.println("Ready...");
 }
 
@@ -46,26 +49,31 @@ void sendEvent(){
 
 void receiveEvent() {
   nbl = Wire.available();
-  Serial.print("nb = ");
-  Serial.println(nbl);
+  // Serial.print("nb = ");
+  // Serial.println(nbl);
   cmd = Wire.read();
-  Serial.print("cmd = ");
-  Serial.println(cmd);
+  // Serial.print("cmd = ");
+  // Serial.println(cmd);
   nb = Wire.read();
-  Serial.print("nb = ");
-  Serial.println(nb);
+  // Serial.print("nb = ");
+  // Serial.println(nb);
   int li[nb];
   for (i = 0; i < nb; i++){
     li[i] = Wire.read();
+    xheading += char(li[i]);
   }
-  Serial.println("Fin lecture");
-  for (i = 0; i < nb; i++){
-    Serial.print(li[i]);
-    Serial.print("   ");
-  }
-  Serial.println("---------------");
-  Serial.println("---------------");
-  Serial.println("---------------");
+  heading = xheading.toFloat();
+  xheading = "";
+  // Serial.println("Fin lecture");
+
+  Serial.print(heading);
+  // histoire de vérifier que c'est bien un float, on ajoute 1.1 !
+  Serial.print(" (+ 1.1 = ");
+  Serial.print(heading + 1.1);
+  Serial.println(")");
+  
+  // Serial.println("---------------");
+  // Serial.println("---------------");
 }
 
 // function that executes whenever data is received from master
