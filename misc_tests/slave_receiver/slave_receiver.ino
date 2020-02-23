@@ -20,6 +20,8 @@ char msg[6] = {'0','1','2','3','4','5'};
 int i = 0;
 String xheading;
 float heading;
+unsigned long currentTime;
+unsigned long currentTime2;
 
 void setup() {
   Serial.begin(9600);
@@ -34,7 +36,15 @@ void setup() {
 }
 
 void loop() {
-  delay(2000);
+  delay(200);
+  Serial.print(heading);
+  // histoire de vérifier que c'est bien un float, on ajoute 1.1 !
+  Serial.print(" (+ 1.1 = ");
+  Serial.print(heading + 1.1);
+  Serial.println(")");
+  Serial.print(currentTime);
+  Serial.print(" ");
+  Serial.println(currentTime2);
   // Serial.println("Ready...");
 }
 
@@ -48,6 +58,7 @@ void sendEvent(){
 }
 
 void receiveEvent() {
+  currentTime = millis();
   nbl = Wire.available();
   // Serial.print("nb = ");
   // Serial.println(nbl);
@@ -58,22 +69,16 @@ void receiveEvent() {
   // Serial.print("nb = ");
   // Serial.println(nb);
   int li[nb];
+  xheading = "";
   for (i = 0; i < nb; i++){
+    /*
     li[i] = Wire.read();
     xheading += char(li[i]);
+    */
+    xheading += char(Wire.read());
   }
   heading = xheading.toFloat();
-  xheading = "";
-  // Serial.println("Fin lecture");
-
-  Serial.print(heading);
-  // histoire de vérifier que c'est bien un float, on ajoute 1.1 !
-  Serial.print(" (+ 1.1 = ");
-  Serial.print(heading + 1.1);
-  Serial.println(")");
-  
-  // Serial.println("---------------");
-  // Serial.println("---------------");
+  currentTime2 = millis();
 }
 
 // function that executes whenever data is received from master
