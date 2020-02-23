@@ -35,6 +35,8 @@ def getHeading(line):
     h = float(line.split('|')[2])
     return "{:06}".format(h)
 
+
+
 with open(gpsDataFile) as fp:
     line = fp.readline()
     while line:
@@ -42,8 +44,11 @@ with open(gpsDataFile) as fp:
         lheading = [len(heading)] + [ord(c) for c in list(heading)]
         print(heading)
         print(lheading)
-        bus.write_i2c_block_data(addr, 17, lheading)
-        time.sleep(0.5)
+        try:
+            bus.write_i2c_block_data(addr, 17, lheading)
+        except:
+            print("i2c non dispo...")
+        time.sleep(2)
         line = fp.readline()
         n += 1
         if n > 15:
