@@ -2,6 +2,7 @@
 
 from pdb import set_trace as st
 from tkinter import *
+# from tkinter.ttk import *
 from functools import partial
 
 currentMode = 'manual'
@@ -89,14 +90,17 @@ def configButtons():
 
 
 root = Tk() # Création de la fenêtre racine
-root.config(background='#1E90FF')
+root.title('Pilote Automatique')
+root.config(background='#1E90FF',
+            )
 root.geometry('580x150+30+30')
 
 currentHeading = Label(root,
                       text="current Heading")
 currentHeading.grid(column=2, row=0)
 targetHeading = Label(root,
-                      text="target Heading")
+                      text="target Heading",
+                      pady=2)
 targetHeading.grid(column=2, row=2)
 configButtons()
 
