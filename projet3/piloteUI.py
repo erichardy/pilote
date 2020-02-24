@@ -1,4 +1,4 @@
-#!/home/pi/PILOTE/pilote/bin/python3
+#!../bin/python3
 
 from pdb import set_trace as st
 from tkinter import *
