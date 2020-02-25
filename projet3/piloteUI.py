@@ -1,69 +1,156 @@
 #!../bin/python3
 
+"""
+Les tuples envoyés dans la file q (Queue) :
+('l', val)
+'l' = type de donnée
+    g = donnée GPS actuelle ; val = angle
+    c = consigne GPS ; val = angle
+    m = mode manuel ; val = m (manuel) ou p (pilote auto)
+    b = babord ; val = 1 ou 5 degrés
+    t = tribord ; val = 1 ou 5 degrés
+Les données dans la file q sont transmises à ADN par la méthode write_i2c_block_data
+    les lettres ci-dessus (g, c, ...) sont transmises dans le champ cmd
+    les valeurs sont transmises sous forme d'un tableau de 6 caractères dans le champ val
+"""
+
 from pdb import set_trace as st
 from tkinter import *
-# from tkinter.ttk import *
 from functools import partial
 import time
 import threading
 import queue
 import sys
 
-currentMode = 'manual'
+currentMode = str('manual')
 q = queue.Queue()
+started = False
+headingCurrent = 0.0
+headingTarget = 0.0
 
-def changeModeCmd():
-    print("updateMode")
+mainWindow = Tk()
+babord5 = Button(mainWindow)
+babord1 = Button(mainWindow)
+changeMode = Button(mainWindow)
+tribord1 = Button(mainWindow)
+tribord5 = Button(mainWindow)
+currentHeading = Label(mainWindow,
+                       text="current Heading")
+targetHeading = Label(mainWindow,
+                      text="target Heading",
+                      pady=2)
+
+
+def getHeading(line):
+    h = float(line.split('|')[2])
+    return "{:06.2f}".format(h)
+
+def getGPSdata():
+    global headingCurrent
+    global headingTarget
+    print('getGPSdata started...')
+    n = 0
+    gpsDataFile = '../misc_tests/GggppssX-11'
+    with open(gpsDataFile) as fp:
+        line = fp.readline()
+        while line:
+            headingCurrent = getHeading(line)
+            currentHeading.config(text=headingCurrent)
+            q.put(('g', headingCurrent))
+            lheading = [len(headingCurrent)] + [ord(c) for c in list(headingCurrent)]
+            time.sleep(1)
+            line = fp.readline()
+            n += 1
+            if n > 25:
+                break
+
+
+def changeModeCmd(p):
+    # print("updateMode")
+    global currentMode
+    global headingCurrent
+    global headingTarget
     bgPilote = "#FFD700"
     bgManual = "#FAFAD2"
-    global currentMode
     if currentMode == "manual":
         bg = bgPilote
         txt = 'Pilote Auto'
         currentMode = 'pilote'
-        q.put(currentMode)
+        headingTarget = headingCurrent
+        targetHeading.config(text=headingTarget)
+        q.put(('m', 'p'))
+        q.put(('c', headingTarget))
     else:
         bg = bgManual
         txt = 'Manuel'
         currentMode = 'manual'
-        q.put(currentMode)
+        q.put(('m', 'm'))
     changeMode.config(background=bg,
                       activebackground=bg,
                       text=txt)
 
-def babord5Cmd():
-    print('babord5')
-    q.put(('bab5','bab5'))
+def updateTargetHeading(op, heading, val):
+    """
+    op : operation, a = add, s = sub
+    heading : string representing a float
+    val : value to add to h
+    returns: string representation of h + v
+    cf https://docs.python.org/fr/3/library/functions.html?highlight=format#format
+    pour plus de détails sur le formatage...
+    """
+    h = float(heading)
+    v = float(val)
+    if op == 'a':
+        newVal = (h + v) % 360.00
+    else:
+        newVal = (h - v) % 360.00
+    return "{:06.2f}".format(newVal)
 
-def babord1Cmd():
-    print('babord1')
-    q.put('bab1')
+def baTri(params):
+    print(params)
+    global headingTarget
+    # global targetHeading
+    if currentMode == 'pilote':
+        if params[0] == 't':
+            newTarget = updateTargetHeading('a', headingTarget, params[1])
+        else:
+            newTarget = updateTargetHeading('s', headingTarget, params[1])
+        headingTarget = newTarget
+        targetHeading.config(text=headingTarget)
+        q.put(('c', headingTarget))
+    else:
+        q.put((params[0], params[1]))
 
-def tribord1Cmd():
-    print('tribord1')
-    q.put('trib1')
 
-def tribord5Cmd():
-    print('tribord5')
-    q.put('trib5')
-
+def startStop(but):
+    global started
+    if not started:
+        but.config(background='#9932CC',
+                   activebackground='#9932CC',
+                   text='Quit !')
+        started = True
+        manageGPS = threading.Thread(target=getGPSdata,
+                             name='manageGPS',
+                             daemon=True)
+        computeGPSdata = threading.Thread(target=manageQueue,
+                                          name='computeGPSdata',
+                                          daemon=True)
+        manageGPS.start()
+        computeGPSdata.start()
+        print('started...')
+    else:
+        started = False
+        but.config(background='#FF8C00',
+                   activebackground='#FF8C00',
+                   )
+        sys.exit()
 
 def configButtons():
     buttons = []
-    global babord5
-    babord5 = Button(mainWindow)
     buttons.append(babord5)
-    global babord1
-    babord1 = Button(mainWindow)
-    buttons.append(babord1)
-    global changeMode
-    changeMode = Button(mainWindow)
+    buttons.append(babord1)    
     buttons.append(changeMode)
-    global tribord1
-    tribord1 = Button(mainWindow)
     buttons.append(tribord1)
-    global tribord5
-    tribord5 = Button(mainWindow)
     buttons.append(tribord5)
     
     columns = [0, 1, 2, 3, 4]
@@ -78,9 +165,17 @@ def configButtons():
     bgs = ["#FF0000", "#FF4500",
            "#FAFAD2",
            "#d6ff97", "#00ff00"]
+    """
     cmds = [babord5Cmd, babord1Cmd,
             changeModeCmd,
             tribord1Cmd, tribord5Cmd]
+    """
+    cmds = [baTri, baTri,
+            changeModeCmd,
+            baTri, baTri]
+    params = [('b', 5), ('b', 1),
+              (None, None),
+              ('t', 1), ('t', 5)]
             
     i = 0
     for button in buttons:
@@ -88,7 +183,7 @@ def configButtons():
         button.config(text=texts[i],
                       width=widths[i],
                       height=heights[i],
-                      command=partial(cmds[i]),
+                      command=partial(cmds[i], params[i]),
                       background=bgs[i],
                       activebackground=bgs[i],
                       )
@@ -98,74 +193,43 @@ def configButtons():
         i += 1
     
 def initUI():
-    # global userInterface
-    print(userInterface.name)
-    global mainWindow
-    mainWindow = Tk() # Création de la fenêtre racine
+    # global mainWindow
+    # mainWindow = Tk() # Création de la fenêtre racine
     mainWindow.title('Pilote Automatique')
-    mainWindow.config(background='#1E90FF',
-                )
-    mainWindow.geometry('580x150+30+30')
-    global currentHeading
-    currentHeading = Label(mainWindow,
-                          text="current Heading")
+    mainWindow.config(background='#1E90FF')
+    mainWindow.geometry('580x200+30+30')
+    
     currentHeading.grid(column=2, row=0)
-    global targetHeading
-    targetHeading = Label(mainWindow,
-                          text="target Heading",
-                          pady=2)
+    
     targetHeading.grid(column=2, row=2)
+    
     configButtons()
 
+    start_button = Button(mainWindow)
+    start_button.config(text='Start...',
+                        width=2,
+                        height=2,
+                        pady=3,
+                        background='#FF8C00',
+                        activebackground='#FF8C00',
+                        command=partial(startStop, start_button),
+                        )
+    start_button.grid(column=2,
+                      row=3)
+    
     mainWindow.mainloop() # Lancement de la boucle principale
 
-def getHeading(line):
-    h = float(line.split('|')[2])
-    return "{:06}".format(h)
 
-def getGPSdata():
-    global currentHeading
-    global q
-    n = 0
-    gpsDataFile = '../misc_tests/GggppssX-11'
-    with open(gpsDataFile) as fp:
-        line = fp.readline()
-        while line:
-            heading = getHeading(line)
-            q.put(('gsp', heading))
-            currentHeading.config(text=heading)
-            lheading = [len(heading)] + [ord(c) for c in list(heading)]
-            time.sleep(1)
-            line = fp.readline()
-            n += 1
-            if n > 15:
-                break
-    
-
-def manageALL():
+def manageQueue():
     global q
     i = 0
     while 1:
         msg = q.get()
         print(msg)
-        if msg == 'trib5':
-            print('Sortie....!!!')
-            # sys.exit()
-            return
-        time.sleep(1)
         
 
-# threading.Thread(target=manageGPS)
-userInterface = threading.Thread(target=initUI,
-                                 name='UserInterface',
-                                 daemon=True)
-userInterface.start()
-manageGPS = threading.Thread(target=getGPSdata,
-                             name='manageGPS',
-                             daemon=True)
-manageGPS.start()
+initUI()
 
-manageALL()
 time.sleep(1)
 
 print('et il se passe quoi maintenant...?')
