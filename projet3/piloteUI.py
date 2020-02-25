@@ -8,19 +8,7 @@ import threading
 import queue
 import sys
 
-# global variables for UI widjets
-mainWindow = Tk()
-babord5 = Button(mainWindow)
-babord1 = Button(mainWindow)
-changeMode = Button(mainWindow)
-tribord1 = Button(mainWindow)
-tribord5 = Button(mainWindow)
-currentHeading = Label(mainWindow,
-                       text="current Heading")
-targetHeading = Label(mainWindow,
-                      text="target Heading",
-                      pady=2)
-quitButton = Button(mainWindow)
+from piloteUIfunctions import *
 
 
 def commandsButtons():
@@ -70,25 +58,13 @@ def commandsButtons():
                     pady=ypads[i],)
         i += 1
 
-def quitPilot():
-    sys.exit()
 
 def headingDisplays():
     # labels for heading display
     currentHeading.grid(column=2, row=0)
     targetHeading.grid(column=2, row=2)
 
-def initUI():
-    # global mainWindow
-    # mainWindow = Tk() # Création de la fenêtre racine
-    mainWindow.title('Pilote Automatique')
-    mainWindow.config(background='#1E90FF')
-    mainWindow.geometry('580x200+40+30')
-
-    headingDisplays()
-    # mains command buttons
-    commandsButtons()
-
+def miscButtons():
     # misc buttons
     start_button = Button(mainWindow)
     start_button.config(text='Start...',
@@ -111,7 +87,22 @@ def initUI():
                       activeforeground=w,
                       command=partial(quitPilot))
     quitButton.grid(column=3, row=3)
+
+def debugButtons():
+    pass
+    
+def initUI():
+    # global mainWindow
+    # mainWindow = Tk() # Création de la fenêtre racine
+    mainWindow.title('Pilote Automatique')
+    mainWindow.config(background='#1E90FF')
+    mainWindow.geometry('580x200+40+30')
+
+    headingDisplays()
+    # mains command buttons
+    commandsButtons()
+    miscButtons()
+    
     if debugMode:
         debugButtons()
-
 
