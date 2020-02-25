@@ -36,7 +36,7 @@ void setup() {
 }
 
 void loop() {
-  delay(200);
+  delay(500);
   Serial.print(heading);
   // histoire de vérifier que c'est bien un float, on ajoute 1.1 !
   Serial.print(" (+ 1.1 = ");
