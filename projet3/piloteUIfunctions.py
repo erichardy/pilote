@@ -8,7 +8,7 @@ import threading
 import queue
 import sys
 
-debugMode = 1
+debugMode = True
 started = False
 currentMode = str('manual')
 
@@ -28,6 +28,15 @@ targetHeading = Label(mainWindow,
                       text="target Heading",
                       pady=2)
 quitButton = Button(mainWindow)
+compassDraw = Canvas(mainWindow)
+
+if debugMode:
+    pidp = Spinbox(mainWindow)
+    pidi = Spinbox(mainWindow)
+    pidd = Spinbox(mainWindow)
+    pidpVal = DoubleVar(mainWindow)
+    pidiVal = DoubleVar(mainWindow)
+    piddVal = DoubleVar(mainWindow)
 
 q = queue.Queue()
 

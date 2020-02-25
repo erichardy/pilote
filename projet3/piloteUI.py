@@ -6,6 +6,7 @@ from functools import partial
 import time
 import threading
 import queue
+from math import radians, cos, sin
 import sys
 
 from piloteUIfunctions import *
@@ -89,20 +90,70 @@ def miscButtons():
     quitButton.grid(column=3, row=3)
 
 def debugButtons():
-    pass
-    
+    global pidpVal
+    global pidiVal
+    global piddVal
+    inc = 5
+    pidpLab = Label(mainWindow,
+                    text='P param')
+    pidpLab.grid(column=0, row=4,
+                 pady=10)
+    pidp.config(text='P pid param',
+                textvariable=pidpVal,
+                from_=0,
+                to=100,
+                increment=inc,
+                width=3,
+                )
+    pidp.grid(column=0, row=5)
+    pidiLab = Label(mainWindow,
+                    text='I param')
+    pidiLab.grid(column=1, row=4)
+    pidi.config(text='I pid param',
+                textvariable=pidiVal,
+                from_=0,
+                to=100,
+                increment=inc,
+                width=3,
+                )
+    pidi.grid(column=1, row=5)
+    piddLab = Label(mainWindow,
+                    text='D param')
+    piddLab.grid(column=2, row=4)
+    pidd.config(text='D pid param',
+                textvariable=piddVal,
+                from_=0,
+                to=100,
+                increment=inc,
+                width=3,
+                )
+    pidd.grid(column=2, row=5)
+    mainWindow.geometry('580x400+40+30')
+
+def compass():
+    """
+    https://docs.python.org/3/library/turtle.html
+    https://docs.python.org/fr/3/library/turtle.html
+    """
+    compassDraw.config(background="white",
+                       width=100,
+                       height=100,
+                       )
+    compassDraw.grid(column=3, row=4)
+
+
 def initUI():
     # global mainWindow
     # mainWindow = Tk() # Création de la fenêtre racine
     mainWindow.title('Pilote Automatique')
     mainWindow.config(background='#1E90FF')
-    mainWindow.geometry('580x200+40+30')
+    mainWindow.geometry('580x280+40+30')
 
     headingDisplays()
     # mains command buttons
     commandsButtons()
     miscButtons()
-    
+    compass()
     if debugMode:
         debugButtons()
 
