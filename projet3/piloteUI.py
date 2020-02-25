@@ -134,6 +134,7 @@ def compass():
     """
     https://docs.python.org/3/library/turtle.html
     https://docs.python.org/fr/3/library/turtle.html
+    https://johanneskinzig.de/index.php/systems-engineering/11-reading-and-visualising-sensor-data-compass-heading
     """
     compassDraw.config(background="white",
                        width=100,
