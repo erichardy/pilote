@@ -54,6 +54,8 @@ def getGPSdata():
     with open(gpsDataFile) as fp:
         line = fp.readline()
         while line:
+            if not started:
+                break
             headingCurrent = getHeading(line)
             currentHeading.config(text=headingCurrent)
             q.put(('g', headingCurrent))
@@ -127,7 +129,7 @@ def startStop(but):
     if not started:
         but.config(background='#9932CC',
                    activebackground='#9932CC',
-                   text='Quit !')
+                   text='Stop pilote!')
         started = True
         manageGPS = threading.Thread(target=getGPSdata,
                              name='manageGPS',
@@ -142,8 +144,8 @@ def startStop(but):
         started = False
         but.config(background='#FF8C00',
                    activebackground='#FF8C00',
-                   )
-        sys.exit()
+                   text='Start...')
+        # sys.exit()
 
 def configButtons():
     buttons = []
@@ -207,11 +209,12 @@ def initUI():
 
     start_button = Button(mainWindow)
     start_button.config(text='Start...',
-                        width=2,
+                        width=10,
                         height=2,
                         pady=3,
                         background='#FF8C00',
                         activebackground='#FF8C00',
+                        foreground='#FFFFFF',
                         command=partial(startStop, start_button),
                         )
     start_button.grid(column=2,
@@ -222,8 +225,9 @@ def initUI():
 
 def manageQueue():
     global q
+    global started
     i = 0
-    while 1:
+    while started:
         msg = q.get()
         print(msg)
         
