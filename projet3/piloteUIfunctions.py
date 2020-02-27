@@ -3,6 +3,7 @@
 from pdb import set_trace as st
 from tkinter import *
 from functools import partial
+import turtle
 import time
 import threading
 import queue
@@ -28,7 +29,13 @@ targetHeading = Label(mainWindow,
                       text="target Heading",
                       pady=2)
 quitButton = Button(mainWindow)
-compassDraw = Canvas(mainWindow)
+compassDrawCanvas = Canvas(mainWindow)
+headingScreen = turtle.TurtleScreen(compassDrawCanvas)
+desiredHeading = turtle.RawTurtle(headingScreen)
+actualHeading = turtle.RawTurtle(headingScreen)
+
+
+
 
 if debugMode:
     pidp = Spinbox(mainWindow)
@@ -122,6 +129,10 @@ def getGPSdata():
                 break
             headingCurrent = getHeading(line)
             currentHeading.config(text=headingCurrent)
+            print(type(headingCurrent))
+            print(float(headingCurrent))
+            print(float(headingCurrent) - 90)
+            actualHeading.settiltangle(float(headingCurrent) - 90)
             q.put(('g', headingCurrent))
             lheading = [len(headingCurrent)] + [ord(c) for c in list(headingCurrent)]
             time.sleep(1)

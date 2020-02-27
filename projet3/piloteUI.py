@@ -2,7 +2,7 @@
 
 from pdb import set_trace as st
 from tkinter import *
-import turtle
+
 from functools import partial
 import time
 import threading
@@ -138,25 +138,37 @@ def compass():
     https://docs.python.org/fr/3/library/turtle.html
     https://johanneskinzig.de/index.php/systems-engineering/11-reading-and-visualising-sensor-data-compass-heading
     """
-    compassDraw.config(background="white",
+    compassDrawCanvas.config(background="white",
                        width=100,
                        height=100,
                        )
-    compassDraw.grid(column=3, row=4)
+    compassDrawCanvas.grid(column=3, row=4)
+    headingScreen.screensize(100, 100)
 
-    actualHeading = turtle.RawTurtle(compassDraw)
-    # actualHeading.mode("standard")
-    actualHeading.shape("triangle")
-    actualHeading.shapesize(0.5,5)
-    actualHeading.fillcolor("blue")
-    actualHeading.settiltangle(-50)
-    desiredHeading = turtle.RawTurtle(compassDraw)
-    # desiredHeading.mode("standard")
+    desiredHeading.penup()
+    desiredHeading.setposition(50, -50)
     desiredHeading.shape("triangle")
-    desiredHeading.shapesize(0.5,5)
+    desiredHeading.shapesize(0.4, 6)
     desiredHeading.fillcolor("red")
-
-    
+    """
+    """
+    actualHeading.penup()
+    actualHeading.setposition(50, -50)
+    actualHeading.shape("triangle")
+    actualHeading.shapesize(0.1, 4)
+    actualHeading.fillcolor("blue")
+    actualHeading.settiltangle(45)
+    """
+    desiredHeading.penup()
+    desiredHeading.setposition(50, -50)
+    desiredHeading.pendown()
+    desiredHeading.settiltangle(45)
+    desiredHeading.fd(10)
+    time.sleep(2)
+    # actualHeading.setpos(50, 0)
+    actualHeading.hideturtle()
+    """
+    print(desiredHeading.position())
 
 
 def initUI():
