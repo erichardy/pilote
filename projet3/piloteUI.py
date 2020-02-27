@@ -27,7 +27,7 @@ def commandsButtons():
     widths = [10, 10, 10, 10, 10]
     heights = [2, 2, 4, 2, 2]
     texts = ["Babord 5°", "Babord 1°",
-             "Manuel",
+             "Passer en\nPilote Auto",
              "Tribord 1°", "Tribord 5°"
              ]
     bgs = ["#FF0000", "#FF4500",
@@ -88,7 +88,7 @@ def miscButtons():
                       activebackground=b,
                       activeforeground=w,
                       command=partial(quitPilot))
-    quitButton.grid(column=3, row=3)
+    quitButton.grid(column=0, row=3)
 
 def debugButtons():
     global pidpVal
@@ -98,7 +98,7 @@ def debugButtons():
     pidpLab = Label(mainWindow,
                     text='P param')
     pidpLab.grid(column=0, row=4,
-                 pady=10)
+                 pady=5)
     pidp.config(text='P pid param',
                 textvariable=pidpVal,
                 from_=0,
@@ -142,7 +142,7 @@ def compass():
                        width=100,
                        height=100,
                        )
-    compassDrawCanvas.grid(column=3, row=4)
+    compassDrawCanvas.grid(column=3, row=3)
     headingScreen.screensize(100, 100)
 
     desiredHeading.penup()
@@ -150,25 +150,14 @@ def compass():
     desiredHeading.shape("triangle")
     desiredHeading.shapesize(0.4, 6)
     desiredHeading.fillcolor("red")
-    """
-    """
+    desiredHeading.settiltangle(90)
+
     actualHeading.penup()
     actualHeading.setposition(50, -50)
     actualHeading.shape("triangle")
     actualHeading.shapesize(0.1, 4)
     actualHeading.fillcolor("blue")
-    actualHeading.settiltangle(45)
-    """
-    desiredHeading.penup()
-    desiredHeading.setposition(50, -50)
-    desiredHeading.pendown()
-    desiredHeading.settiltangle(45)
-    desiredHeading.fd(10)
-    time.sleep(2)
-    # actualHeading.setpos(50, 0)
-    actualHeading.hideturtle()
-    """
-    print(desiredHeading.position())
+    actualHeading.settiltangle(90)
 
 
 def initUI():
@@ -176,7 +165,7 @@ def initUI():
     # mainWindow = Tk() # Création de la fenêtre racine
     mainWindow.title('Pilote Automatique')
     mainWindow.config(background='#1E90FF')
-    mainWindow.geometry('580x280+40+30')
+    mainWindow.geometry('580x300+40+30')
 
     headingDisplays()
     # mains command buttons

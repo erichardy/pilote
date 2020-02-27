@@ -9,7 +9,9 @@ import threading
 import queue
 import sys
 
-debugMode = True
+# debugMode = True
+debugMode = False
+
 started = False
 currentMode = str('manual')
 
@@ -49,7 +51,7 @@ q = queue.Queue()
 
 
 def baTri(params):
-    print(params)
+    # print(params)
     global headingTarget
     # global targetHeading
     if currentMode == 'pilote':
@@ -59,9 +61,11 @@ def baTri(params):
             newTarget = updateTargetHeading('s', headingTarget, params[1])
         headingTarget = newTarget
         targetHeading.config(text=headingTarget)
-        q.put(('c', headingTarget))
+        desiredHeading.settiltangle(float(headingTarget) + 90)
+        # q.put(('c', headingTarget))
     else:
-        q.put((params[0], params[1]))
+        pass
+        # q.put((params[0], params[1]))
 
 def changeModeCmd(p):
     # print("updateMode")
@@ -72,17 +76,18 @@ def changeModeCmd(p):
     bgManual = "#FAFAD2"
     if currentMode == "manual":
         bg = bgPilote
-        txt = 'Pilote Auto'
+        txt = 'Passer en\nManuel'
         currentMode = 'pilote'
         headingTarget = headingCurrent
         targetHeading.config(text=headingTarget)
-        q.put(('m', 'p'))
-        q.put(('c', headingTarget))
+        desiredHeading.settiltangle(float(headingTarget) + 90)
+        # q.put(('m', 'p'))
+        # q.put(('c', headingTarget))
     else:
         bg = bgManual
-        txt = 'Manuel'
+        txt = 'Passer en\nPilote Auto'
         currentMode = 'manual'
-        q.put(('m', 'm'))
+        # q.put(('m', 'm'))
     changeMode.config(background=bg,
                       activebackground=bg,
                       text=txt)
@@ -105,6 +110,8 @@ def startStop(but):
         print('started...')
     else:
         started = False
+        if currentMode != "manual":
+            changeModeCmd(None)
         but.config(background='#FF8C00',
                    activebackground='#FF8C00',
                    text='Start...')
@@ -129,11 +136,8 @@ def getGPSdata():
                 break
             headingCurrent = getHeading(line)
             currentHeading.config(text=headingCurrent)
-            print(type(headingCurrent))
-            print(float(headingCurrent))
-            print(float(headingCurrent) - 90)
-            actualHeading.settiltangle(float(headingCurrent) - 90)
-            q.put(('g', headingCurrent))
+            actualHeading.settiltangle(float(headingCurrent) + 90)
+            # q.put(('g', headingCurrent))
             lheading = [len(headingCurrent)] + [ord(c) for c in list(headingCurrent)]
             time.sleep(1)
             line = fp.readline()
@@ -153,9 +157,9 @@ def updateTargetHeading(op, heading, val):
     h = float(heading)
     v = float(val)
     if op == 'a':
-        newVal = (h + v) % 360.00
-    else:
         newVal = (h - v) % 360.00
+    else:
+        newVal = (h + v) % 360.00
     return "{:06.2f}".format(newVal)
 
 
@@ -165,4 +169,4 @@ def manageQueue():
     i = 0
     while started:
         msg = q.get()
-        print(msg)
+        # print(msg)
