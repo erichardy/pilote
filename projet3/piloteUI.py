@@ -2,6 +2,7 @@
 
 from pdb import set_trace as st
 from tkinter import *
+import turtle
 from functools import partial
 import time
 import threading
@@ -141,6 +142,10 @@ def compass():
                        height=100,
                        )
     compassDraw.grid(column=3, row=4)
+    compassWindow = turtle.RawTurtle(compassDraw)
+    actualHeading = turtle.Turtle()
+    desiredHeading = turtle.Turtle()
+    
 
 
 def initUI():
