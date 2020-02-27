@@ -131,6 +131,7 @@ def debugButtons():
     pidd.grid(column=2, row=5)
     mainWindow.geometry('580x400+40+30')
 
+
 def compass():
     """
     https://docs.python.org/3/library/turtle.html
@@ -142,9 +143,19 @@ def compass():
                        height=100,
                        )
     compassDraw.grid(column=3, row=4)
-    compassWindow = turtle.RawTurtle(compassDraw)
-    actualHeading = turtle.Turtle()
-    desiredHeading = turtle.Turtle()
+
+    actualHeading = turtle.RawTurtle(compassDraw)
+    # actualHeading.mode("standard")
+    actualHeading.shape("triangle")
+    actualHeading.shapesize(0.5,5)
+    actualHeading.fillcolor("blue")
+    actualHeading.settiltangle(-50)
+    desiredHeading = turtle.RawTurtle(compassDraw)
+    # desiredHeading.mode("standard")
+    desiredHeading.shape("triangle")
+    desiredHeading.shapesize(0.5,5)
+    desiredHeading.fillcolor("red")
+
     
 
 
