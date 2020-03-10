@@ -1,5 +1,10 @@
 #!../bin/python3
 
+"""
+No more used !!!
+Those functions are in piloteUIfunctions.py
+"""
+
 from pdb import set_trace as st
 from tkinter import *
 # from tkinter.ttk import *
