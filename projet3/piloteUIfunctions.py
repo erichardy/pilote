@@ -37,8 +37,6 @@ desiredHeading = turtle.RawTurtle(headingScreen)
 actualHeading = turtle.RawTurtle(headingScreen)
 
 
-
-
 if debugMode:
     pidp = Spinbox(mainWindow)
     pidi = Spinbox(mainWindow)
@@ -51,6 +49,26 @@ q = queue.Queue()
 
 
 def baTri(params):
+    """
+    Change direction : babord / Tribord
+    If in pilote mode : use of PID controler...
+        display the new target heading in UI : the new target heading depends of
+        the current target and the command received in params
+        test if actuator is moving
+            if not moving : send to ADN command for the actuator
+            if moving : wait for end of actuator move then send command to ADN
+    If in manual mode :
+        test if actuator is moving :
+            if moving : wait for end of actuator move then send command to ADN to
+                change the tiller agle
+            if not moving : send command to change the tiller angle
+    :params: params is a tuple ('b|t', 1|5)
+        b = babord
+        t = tribord
+        1 = 1°
+        5 = 5°
+    !!! NB : the global variable headingTarget is modified !!!
+    """
     # print(params)
     global headingTarget
     # global targetHeading
@@ -62,8 +80,14 @@ def baTri(params):
         headingTarget = newTarget
         targetHeading.config(text=headingTarget)
         desiredHeading.settiltangle(float(headingTarget) + 90)
+        # -- test if actuator is moving
+        # when not moving, send command to ADN
+        # the command should be sommething similar to the params of this function
+        # q.put('
         # q.put(('c', headingTarget))
     else:
+        # -- test if actuator is moving
+        # when not moving, send command to ADN
         pass
         # q.put((params[0], params[1]))
 
@@ -120,6 +144,11 @@ def quitPilot():
     sys.exit()
 
 def getHeading(line):
+    """
+    Cette fonction, telle qu'elle est, n'est utilisée que dans le cas de la similation
+    où le cap actuel est issus d'un fichier (GggppssX-11)
+    En situation réelle, ce sera le résultat de la requête à GPSD
+    """
     h = float(line.split('|')[2])
     return "{:06.2f}".format(h)
 
@@ -153,6 +182,7 @@ def updateTargetHeading(op, heading, val):
     returns: string representation of h + v
     cf https://docs.python.org/fr/3/library/functions.html?highlight=format#format
     pour plus de détails sur le formatage...
+    Pour l'envoi de la durée : "{:05d}".format(duration)
     """
     h = float(heading)
     v = float(val)

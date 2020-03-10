@@ -24,21 +24,25 @@ from sys import exit
 addr = 0x8 # bus address
 bus = SMBus(1) # indicates /dev/ic2-1
 
+"""
 while 1:
     nb = input(">>>>   ")
     if int(nb) == 9:
         exit()
     msg= bus.read_i2c_block_data(addr, 7)
     st()
+"""
 
 while 1:
     print ("combien de nombres a envoyer...")
     nb = input(">>>>   ")
-    msg = list(range(int(nb)))
+    msg = [x + 48 for x in list(range(int(nb)))]
+    print(msg)
     bus.write_block_data(addr, 7, msg)
     if int(nb) == 9:
         break;
 time.sleep(0.1)
+"""
 while 1:
     nb = input('>>>> ')
     lec = bus.read_byte(addr)
@@ -47,7 +51,7 @@ while 1:
     print("\n")
     if int(nb) == 9:
         break;
-
+"""
 
 # time.sleep(1)
 # xcar = bus.read_byte(addr)
