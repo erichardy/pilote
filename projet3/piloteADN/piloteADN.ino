@@ -6,9 +6,9 @@
 // test mouvement moteur : 4 entre les pins i2c et les pins de commande du moteur
 #define moveMotor 4
 // Moteur : les pins 17, 27, 22 sont contigues
-#define EN 9 // 9
-#define IN1 8 // 8
-#define IN2 7 // 7
+#define EN 10 // 9
+#define IN1 9 // 8
+#define IN2 8 // 7
 
 // paramètres i2c
 int adnAdress = 0x8;
@@ -42,23 +42,27 @@ void receiveCmd() {
 }
 
 void setup() {
+  delay(200);
+  //used for display information
+  Serial.begin(9600);
   // initialisation i2c
+  Serial.println("ADN init in progress...");
   Wire.begin(adnAdress);                // join i2c bus with address #8
   Wire.onReceive(receiveCmd);
   
-  //used for display information
-  Serial.begin(9600);
+  
   
   // initialisation moteur
   motor.setSpeed(255); // an integer between 0 and 255
   motor.forward();
-  delay(1000);
+  delay(200);
   motor.backward();
-  delay(1000);
+  delay(300);
   motor.stop();
+  Serial.println("ADN init done.");
 }
 
-void move(char steer, int dur){
+void move(char steer, unsigned long dur){
   if (steer == 'b') {
     motor.forward();
   } else {
@@ -69,7 +73,10 @@ void move(char steer, int dur){
 }
 
 void loop() {
-  delay(500);
+  delay(20);
+  if (motor.isMoving()) {
+    Serial.println("Moteur en action !!!");
+  }
   if (x_currentTime != currentTime) {
     // send command to motor !!!
     Serial.print(char(steering));
