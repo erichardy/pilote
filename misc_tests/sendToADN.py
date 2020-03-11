@@ -16,8 +16,8 @@ addr = 0x8 # bus address
 bus = SMBus(1) # indicates /dev/ic2-1
 
 steerings = ['b', 'b', 't', 'b', 't', 't', 't', 'b']
-durations = [2000, 1345, 55, 4565,
-             4777, 1254, 4686, 741]
+durations = [200, 134, 855, 565,
+             777, 254, 686, 741]
 
 i = 0
 
@@ -25,12 +25,11 @@ while i < len(steerings):
     steering = ord(steerings[i])
     x_duration = "{:05}".format(durations[i])
     duration = [ord(d) for d in x_duration]
-    print(steering)
-    print(duration)
-    # must wait the motor is free (not moving) before to send command !
-    # only b-200, t-1254 and b-741 are received and excecuted...
+    print("%s %i %i %s" % (
+        steerings[i], steering,
+        durations[i], duration))
     bus.write_block_data(addr, steering, duration)
-    time.sleep(0.5)
+    time.sleep(0.95)
     i += 1
     
 
