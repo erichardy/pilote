@@ -27,9 +27,27 @@ import sys
 from piloteUI import *
 
 
+
 def __main__():
-    initUI()
+    # initUI()
+    # (addr, bus) = initI2C()
+    
+    userInterface = threading.Thread(target=initUI,
+                                     name='UserInterface',
+                                     daemon=True)
+    userInterface.start()
+    """
+    manageGPS = threading.Thread(target=getGPSdata,
+                             name='manageGPS',
+                             daemon=True)
+    manageGPS.start()
+    """
+    manageAll = threading.Thread(target=manageALL,
+                                     name='manage_ALL',
+                                     daemon=True)
+    manageAll.start()
     mainWindow.mainloop() # Lancement de la boucle principale
+
 
 __main__()
 

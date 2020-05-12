@@ -13,6 +13,9 @@ import sys
 from piloteUIfunctions import *
 
 
+addr = 0x8 # bus address
+bus = SMBus(1) # indicates /dev/ic2-1
+
 def commandsButtons():
     buttons = []
     buttons.append(babord5)
@@ -68,17 +71,17 @@ def headingDisplays():
 
 def miscButtons():
     # misc buttons
-    start_button = Button(mainWindow)
-    start_button.config(text='Start...',
+    startGPS_button = Button(mainWindow)
+    startGPS_button.config(text='Start GPS...',
                         width=10,
                         height=2,
                         pady=3,
                         background='#FF8C00',
                         activebackground='#FF8C00',
                         foreground='#FFFFFF',
-                        command=partial(startStop, start_button),
+                        command=partial(startStopGPS, startGPS_button),
                         )
-    start_button.grid(column=2,
+    startGPS_button.grid(column=2,
                       row=3)
     w = '#FFFFFF'
     b = '#000000'
@@ -168,10 +171,35 @@ def initUI():
     mainWindow.geometry('580x300+40+30')
 
     headingDisplays()
-    # mains command buttons
+    # main command buttons
     commandsButtons()
     miscButtons()
     compass()
     if debugMode:
         debugButtons()
 
+def initI2C():
+    addr = 0x8 # bus address
+    bus = SMBus(1) # indicates /dev/ic2-1
+    return((addr, bus))
+    
+def manageALL():
+    
+    print('manageALL() Started...')
+    global q
+    i = 0
+    while 1:
+        msg = q.get()
+        steering = ord(msg[0])
+        angle = msg[1]
+        duration = angle * 50
+        x_duration = "{:05}".format(duration)
+        duration = [ord(d) for d in x_duration]
+        bus.write_block_data(addr, steering, duration)
+        print ('.... %s' % (str(msg)))
+        # print(str(msg))
+        if msg == 'trib5':
+            print('Sortie....!!!')
+            # sys.exit()
+            return
+        # time.sleep(1)

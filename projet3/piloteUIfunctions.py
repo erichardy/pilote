@@ -8,6 +8,7 @@ import time
 import threading
 import queue
 import sys
+from smbus import SMBus
 
 # debugMode = True
 debugMode = False
@@ -67,7 +68,7 @@ def baTri(params):
         t = tribord
         1 = 1°
         5 = 5°
-    !!! NB : the global variable headingTarget is modified !!!
+    !!! NB : the global variable headingTarget is updated !!!
     """
     # print(params)
     global headingTarget
@@ -88,8 +89,9 @@ def baTri(params):
     else:
         # -- test if actuator is moving
         # when not moving, send command to ADN
-        pass
-        # q.put((params[0], params[1]))
+        
+        # pass
+        q.put((params[0], params[1]))
 
 def changeModeCmd(p):
     # print("updateMode")
@@ -116,12 +118,12 @@ def changeModeCmd(p):
                       activebackground=bg,
                       text=txt)
 
-def startStop(but):
+def startStopGPS(but):
     global started
     if not started:
         but.config(background='#9932CC',
                    activebackground='#9932CC',
-                   text='Stop pilote!')
+                   text='Stop GPS!')
         started = True
         manageGPS = threading.Thread(target=getGPSdata,
                              name='manageGPS',
@@ -130,7 +132,7 @@ def startStop(but):
                                           name='computeGPSdata',
                                           daemon=True)
         manageGPS.start()
-        computeGPSdata.start()
+        # computeGPSdata.start()
         print('started...')
     else:
         started = False
@@ -138,14 +140,14 @@ def startStop(but):
             changeModeCmd(None)
         but.config(background='#FF8C00',
                    activebackground='#FF8C00',
-                   text='Start...')
+                   text='Start GPS...')
 
 def quitPilot():
     sys.exit()
 
 def getHeading(line):
     """
-    Cette fonction, telle qu'elle est, n'est utilisée que dans le cas de la similation
+    Cette fonction, telle qu'elle est, n'est utilisée que dans le cas de la simulation
     où le cap actuel est issus d'un fichier (GggppssX-11)
     En situation réelle, ce sera le résultat de la requête à GPSD
     """

@@ -15,7 +15,7 @@ from sys import exit
 addr = 0x8 # bus address
 bus = SMBus(1) # indicates /dev/ic2-1
 
-steerings = ['b', 'b', 't', 'b', 't', 't', 't', 'b']
+steerings = ['b', 'b', 't', 'b', 't', 't', 'b', 'b']
 durations = [200, 134, 855, 565,
              777, 254, 686, 741]
 
