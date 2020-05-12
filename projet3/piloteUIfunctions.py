@@ -13,7 +13,7 @@ from smbus import SMBus
 # debugMode = True
 debugMode = False
 
-started = False
+GPSstarted = False
 currentMode = str('manual')
 
 headingCurrent = 0.0
@@ -73,7 +73,7 @@ def baTri(params):
     # print(params)
     global headingTarget
     # global targetHeading
-    if currentMode == 'pilote':
+    if ((currentMode == 'pilote') and (GPSstarted)):
         if params[0] == 't':
             newTarget = updateTargetHeading('a', headingTarget, params[1])
         else:
@@ -81,9 +81,8 @@ def baTri(params):
         headingTarget = newTarget
         targetHeading.config(text=headingTarget)
         desiredHeading.settiltangle(float(headingTarget) + 90)
-        # -- test if actuator is moving
-        # when not moving, send command to ADN
-        # the command should be sommething similar to the params of this function
+        print('Heading modified !')
+        
         # q.put('
         # q.put(('c', headingTarget))
     else:
@@ -100,7 +99,7 @@ def changeModeCmd(p):
     global headingTarget
     bgPilote = "#FFD700"
     bgManual = "#FAFAD2"
-    if currentMode == "manual":
+    if ((currentMode == "manual") and (GPSstarted)):
         bg = bgPilote
         txt = 'Passer en\nManuel'
         currentMode = 'pilote'
@@ -119,23 +118,19 @@ def changeModeCmd(p):
                       text=txt)
 
 def startStopGPS(but):
-    global started
-    if not started:
+    global GPSstarted
+    if not GPSstarted:
         but.config(background='#9932CC',
                    activebackground='#9932CC',
                    text='Stop GPS!')
-        started = True
+        GPSstarted = True
         manageGPS = threading.Thread(target=getGPSdata,
                              name='manageGPS',
                              daemon=True)
-        computeGPSdata = threading.Thread(target=manageQueue,
-                                          name='computeGPSdata',
-                                          daemon=True)
         manageGPS.start()
-        # computeGPSdata.start()
         print('started...')
     else:
-        started = False
+        GPSstarted = False
         if currentMode != "manual":
             changeModeCmd(None)
         but.config(background='#FF8C00',
@@ -163,7 +158,7 @@ def getGPSdata():
     with open(gpsDataFile) as fp:
         line = fp.readline()
         while line:
-            if not started:
+            if not GPSstarted:
                 break
             headingCurrent = getHeading(line)
             currentHeading.config(text=headingCurrent)
