@@ -9,15 +9,17 @@ import threading
 import queue
 import sys
 from smbus import SMBus
+sys.path.append('/home/pi/PILOTE/pilote/lib/python3.7/site-packages')
+from simple_pid import PID
 
 # debugMode = True
 debugMode = False
 
-GPSstarted = False
+GPSstarted = True
 currentMode = str('manual')
 
-headingCurrent = 0.0
-headingTarget = 0.0
+headingCurrent = '0.0'
+headingTarget = '0.0'
 
 # global variables for UI widjets
 mainWindow = Tk()
@@ -37,6 +39,11 @@ headingScreen = turtle.TurtleScreen(compassDrawCanvas)
 desiredHeading = turtle.RawTurtle(headingScreen)
 actualHeading = turtle.RawTurtle(headingScreen)
 
+# pilote control
+piloteCTL = PID(1, 1, 1, 0.0)
+
+MIN_ANGLE = 1
+MAX_ANGLE = 40
 
 if debugMode:
     pidp = Spinbox(mainWindow)
@@ -54,15 +61,10 @@ def baTri(params):
     Change direction : babord / Tribord
     If in pilote mode : use of PID controler...
         display the new target heading in UI : the new target heading depends of
-        the current target and the command received in params
-        test if actuator is moving
-            if not moving : send to ADN command for the actuator
-            if moving : wait for end of actuator move then send command to ADN
-    If in manual mode :
-        test if actuator is moving :
-            if moving : wait for end of actuator move then send command to ADN to
-                change the tiller agle
-            if not moving : send command to change the tiller angle
+        the current target and the command received in params,
+        and modify the target heading : headingTarget variable
+        The PID controler must use this new parameter
+    If in manual mode : send command to change the tiller angle
     :params: params is a tuple ('b|t', 1|5)
         b = babord
         t = tribord
@@ -73,24 +75,96 @@ def baTri(params):
     # print(params)
     global headingTarget
     # global targetHeading
-    if ((currentMode == 'pilote') and (GPSstarted)):
-        if params[0] == 't':
+    if currentMode == 'pilote':
+        if params[0] == 'b':
             newTarget = updateTargetHeading('a', headingTarget, params[1])
         else:
             newTarget = updateTargetHeading('s', headingTarget, params[1])
         headingTarget = newTarget
         targetHeading.config(text=headingTarget)
-        desiredHeading.settiltangle(float(headingTarget) + 90)
+        desiredHeading.settiltangle(360 - float(headingTarget) + 90)
         print('Heading modified !')
         
         # q.put('
         # q.put(('c', headingTarget))
     else:
-        # -- test if actuator is moving
-        # when not moving, send command to ADN
-        
-        # pass
+        # if not in pilote mode, interract directly with actuator
         q.put((params[0], params[1]))
+
+
+def sendAlert():
+    print('ALERT ALERT ALERT !!!!!!')
+
+def sendToADN(direction, value):
+    """
+    the value must be adapted with the duration of the actuator movement,
+    may be more than a multiplier...???
+    """
+    # multiplier = XXX # to be defined ???
+    multiplier = 1
+    print("%s %i" % (direction, value * multiplier))
+    if currentMode == 'pilote':
+        q.put((direction, value * multiplier))
+    
+    
+
+def getCorrection(target, current):
+    """
+    target : float
+    current : float
+    return : a direction ('b' or 't') and a value to be sent to ADN
+    """
+    diff = target - current
+    # target and current closed => do nothing
+    if abs(diff) <= MIN_ANGLE:
+          return(True)
+
+    if diff < MAX_ANGLE:
+        # we are in the case of t and c are usable immediatly,
+        # they are in the same zone
+        if diff < 0:
+            direction = 't' # correction to Tribord
+        else:
+            direction = 'b' # correction to Badord
+        sendToADN(direction, int(abs(diff)))
+    else:
+        """ either they are too far,
+         either they are around the 0 """
+        if (360 - abs(diff)) > MAX_ANGLE:
+            sendAlert()
+            return
+        else:
+            if diff > 0:
+                direction = 't'
+                sendToADN(direction, 360 - int(abs(diff)))
+            else:
+                direction = 'b'
+                sendToADN(direction, abs(360 + int(diff)))
+            
+          
+
+def pilotePID():
+    time.sleep(1)
+    """
+    piloteCTL.set_auto_mode(True)
+    print("%f -+- %f" % (float(headingTarget),
+                         float(headingCurrent)))
+    while 1:
+        f_headingTarget = float(headingTarget)
+        f_headingCurrent = float(headingCurrent)
+        piloteCTL.setpoint = f_headingTarget
+        correction = piloteCTL(f_headingCurrent)
+        print("Correction = %f" % (correction))
+        time.sleep(0.95)
+    """
+    while 1:
+        f_headingTarget = float(headingTarget)
+        f_headingCurrent = float(headingCurrent)
+        print("%f -+- %f" % (f_headingTarget,
+                             f_headingCurrent))
+        getCorrection(f_headingTarget, f_headingCurrent)
+        print('-----')
+        time.sleep(1)
 
 def changeModeCmd(p):
     # print("updateMode")
@@ -99,13 +173,14 @@ def changeModeCmd(p):
     global headingTarget
     bgPilote = "#FFD700"
     bgManual = "#FAFAD2"
-    if ((currentMode == "manual") and (GPSstarted)):
+    if currentMode == "manual":
         bg = bgPilote
         txt = 'Passer en\nManuel'
         currentMode = 'pilote'
         headingTarget = headingCurrent
         targetHeading.config(text=headingTarget)
-        desiredHeading.settiltangle(float(headingTarget) + 90)
+        desiredHeading.settiltangle(360 - float(headingTarget) + 90)
+        
         # q.put(('m', 'p'))
         # q.put(('c', headingTarget))
     else:
@@ -124,18 +199,24 @@ def startStopGPS(but):
                    activebackground='#9932CC',
                    text='Stop GPS!')
         GPSstarted = True
+        startGPS.set()
+        """
         manageGPS = threading.Thread(target=getGPSdata,
                              name='manageGPS',
                              daemon=True)
-        manageGPS.start()
+        """
+        # manageGPS.start()
         print('started...')
     else:
         GPSstarted = False
+        startGPS.clear()
         if currentMode != "manual":
             changeModeCmd(None)
         but.config(background='#FF8C00',
                    activebackground='#FF8C00',
                    text='Start GPS...')
+        print('GPS Stopped .')
+
 
 def quitPilot():
     sys.exit()
@@ -153,23 +234,20 @@ def getGPSdata():
     global headingCurrent
     global headingTarget
     print('getGPSdata started...')
-    n = 0
-    gpsDataFile = '../misc_tests/GggppssX-11'
-    with open(gpsDataFile) as fp:
-        line = fp.readline()
-        while line:
-            if not GPSstarted:
-                break
-            headingCurrent = getHeading(line)
-            currentHeading.config(text=headingCurrent)
-            actualHeading.settiltangle(float(headingCurrent) + 90)
-            # q.put(('g', headingCurrent))
-            lheading = [len(headingCurrent)] + [ord(c) for c in list(headingCurrent)]
-            time.sleep(1)
+    while 1:
+        gpsDataFile = '../misc_tests/GggppssX-11'
+        with open(gpsDataFile) as fp:
             line = fp.readline()
-            n += 1
-            if n > 25:
-                break
+            while line:
+                headingCurrent = getHeading(line)
+                currentHeading.config(text=headingCurrent)
+                # compassAngle : only for display compass on UI
+                compassAngle = 360 - float(headingCurrent) + 90
+                actualHeading.settiltangle(compassAngle)
+                # print("%f / %f" % (float(headingCurrent), compassAngle))
+                time.sleep(2.80)
+                line = fp.readline()
+
 
 def updateTargetHeading(op, heading, val):
     """

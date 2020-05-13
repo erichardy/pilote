@@ -36,16 +36,21 @@ def __main__():
                                      name='UserInterface',
                                      daemon=True)
     userInterface.start()
-    """
-    manageGPS = threading.Thread(target=getGPSdata,
-                             name='manageGPS',
-                             daemon=True)
-    manageGPS.start()
-    """
+
     manageAll = threading.Thread(target=manageALL,
                                      name='manage_ALL',
                                      daemon=True)
     manageAll.start()
+    manageGPS = threading.Thread(target=getGPSdata,
+                             name='manageGPS',
+                             daemon=True,
+                             )
+    manageGPS.start()
+    pilotePilote = threading.Thread(target=pilotePID,
+                                    name='pilotePID',
+                                    daemon=True)
+    pilotePilote.start()
+
     mainWindow.mainloop() # Lancement de la boucle principale
 
 

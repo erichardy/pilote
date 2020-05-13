@@ -36,11 +36,7 @@ def commandsButtons():
     bgs = ["#FF0000", "#FF4500",
            "#FAFAD2",
            "#d6ff97", "#00ff00"]
-    """
-    cmds = [babord5Cmd, babord1Cmd,
-            changeModeCmd,
-            tribord1Cmd, tribord5Cmd]
-    """
+
     cmds = [baTri, baTri,
             changeModeCmd,
             baTri, baTri]
@@ -71,6 +67,7 @@ def headingDisplays():
 
 def miscButtons():
     # misc buttons
+    """
     startGPS_button = Button(mainWindow)
     startGPS_button.config(text='Start GPS...',
                         width=10,
@@ -83,6 +80,7 @@ def miscButtons():
                         )
     startGPS_button.grid(column=2,
                       row=3)
+    """
     w = '#FFFFFF'
     b = '#000000'
     quitButton.config(text='Quit !!',
@@ -91,7 +89,7 @@ def miscButtons():
                       activebackground=b,
                       activeforeground=w,
                       command=partial(quitPilot))
-    quitButton.grid(column=0, row=3)
+    quitButton.grid(column=3, row=3)
 
 def debugButtons():
     global pidpVal
@@ -145,7 +143,7 @@ def compass():
                        width=100,
                        height=100,
                        )
-    compassDrawCanvas.grid(column=3, row=3)
+    compassDrawCanvas.grid(column=0, row=3)
     headingScreen.screensize(100, 100)
 
     desiredHeading.penup()
@@ -178,13 +176,8 @@ def initUI():
     if debugMode:
         debugButtons()
 
-def initI2C():
-    addr = 0x8 # bus address
-    bus = SMBus(1) # indicates /dev/ic2-1
-    return((addr, bus))
     
 def manageALL():
-    
     print('manageALL() Started...')
     global q
     i = 0
@@ -197,9 +190,4 @@ def manageALL():
         duration = [ord(d) for d in x_duration]
         bus.write_block_data(addr, steering, duration)
         print ('.... %s' % (str(msg)))
-        # print(str(msg))
-        if msg == 'trib5':
-            print('Sortie....!!!')
-            # sys.exit()
-            return
-        # time.sleep(1)
+
