@@ -81,6 +81,23 @@ def miscButtons():
     startGPS_button.grid(column=2,
                       row=3)
     """
+    # button for double tiller movement : to change the heading
+    # we must change the tiller angle and to restore it to its firts
+    # position. Only use in pilote mode !
+    """
+    tillerDouble_button = Button(mainWindow)
+    tillerDouble_button.config(text='Double Tiller\nmovement',
+                        width=10,
+                        height=2,
+                        pady=3,
+                        background='#FF8C00',
+                        activebackground='#FF8C00',
+                        foreground='#FFFFFF',
+                        command=partial(tillerDoubleSwitch, tillerDouble_button),
+                        )
+    tillerDouble_button.grid(column=2,
+                             row=3)
+    """
     w = '#FFFFFF'
     b = '#000000'
     quitButton.config(text='Quit !!',
@@ -90,6 +107,7 @@ def miscButtons():
                       activeforeground=w,
                       command=partial(quitPilot))
     quitButton.grid(column=3, row=3)
+
 
 def debugButtons():
     global pidpVal
@@ -182,6 +200,8 @@ def manageALL():
     global q
     i = 0
     while 1:
+        if finished:
+            return
         msg = q.get()
         steering = ord(msg[0])
         angle = msg[1]

@@ -38,6 +38,8 @@ compassDrawCanvas = Canvas(mainWindow)
 headingScreen = turtle.TurtleScreen(compassDrawCanvas)
 desiredHeading = turtle.RawTurtle(headingScreen)
 actualHeading = turtle.RawTurtle(headingScreen)
+tillerDouble = False
+finished = False
 
 # pilote control
 piloteCTL = PID(1, 1, 1, 0.0)
@@ -55,6 +57,19 @@ if debugMode:
 
 q = queue.Queue()
 
+
+def tillerDoubleSwitch(but):
+    global tillerDouble
+    tillerDouble = not tillerDouble
+    if not tillerDouble:
+        but.config(background='#9932CC',
+                   activebackground='#9932CC',
+                   text='Single Tiller\nmovement')
+    else:
+        but.config(background='#FF8C00',
+                   activebackground='#FF8C00',
+                   text='Double Tiller\nmovement')
+    
 
 def baTri(params):
     """
@@ -105,8 +120,14 @@ def sendToADN(direction, value):
     print("%s %i" % (direction, value * multiplier))
     if currentMode == 'pilote':
         q.put((direction, value * multiplier))
-    
-    
+    if tillerDouble:
+        if direction == 't':
+            direction = 'b'
+        else:
+            direction = 't'
+        q.put((direction, value * multiplier))
+
+
 
 def getCorrection(target, current):
     """
@@ -119,7 +140,7 @@ def getCorrection(target, current):
     if abs(diff) <= MIN_ANGLE:
           return(True)
 
-    if diff < MAX_ANGLE:
+    if abs(diff) < MAX_ANGLE:
         # we are in the case of t and c are usable immediatly,
         # they are in the same zone
         if diff < 0:
@@ -165,6 +186,8 @@ def pilotePID():
         getCorrection(f_headingTarget, f_headingCurrent)
         print('-----')
         time.sleep(1)
+        if finished:
+            return
 
 def changeModeCmd(p):
     # print("updateMode")
@@ -219,7 +242,9 @@ def startStopGPS(but):
 
 
 def quitPilot():
-    sys.exit()
+    global finished
+    finished = True
+    mainWindow.destroy()
 
 def getHeading(line):
     """
@@ -235,10 +260,14 @@ def getGPSdata():
     global headingTarget
     print('getGPSdata started...')
     while 1:
+        if finished:
+            return
         gpsDataFile = '../misc_tests/GggppssX-11'
         with open(gpsDataFile) as fp:
             line = fp.readline()
             while line:
+                if finished:
+                    return
                 headingCurrent = getHeading(line)
                 currentHeading.config(text=headingCurrent)
                 # compassAngle : only for display compass on UI

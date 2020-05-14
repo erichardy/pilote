@@ -29,29 +29,29 @@ from piloteUI import *
 
 
 def __main__():
-    # initUI()
-    # (addr, bus) = initI2C()
     
     userInterface = threading.Thread(target=initUI,
                                      name='UserInterface',
-                                     daemon=True)
+                                     daemon=False)
     userInterface.start()
 
     manageAll = threading.Thread(target=manageALL,
                                      name='manage_ALL',
-                                     daemon=True)
+                                     daemon=False)
     manageAll.start()
     manageGPS = threading.Thread(target=getGPSdata,
                              name='manageGPS',
-                             daemon=True,
+                             daemon=False,
                              )
     manageGPS.start()
     pilotePilote = threading.Thread(target=pilotePID,
                                     name='pilotePID',
-                                    daemon=True)
+                                    daemon=False)
     pilotePilote.start()
 
     mainWindow.mainloop() # Lancement de la boucle principale
+    print('Main window closed !!!')
+    # st()
 
 
 __main__()
