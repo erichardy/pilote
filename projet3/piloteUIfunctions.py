@@ -294,6 +294,8 @@ def getGPSdata():
     session = gps(mode=WATCH_ENABLE)
     try:
         while True:
+            if finished:
+                return
             report = session.next()
             if report['class'] == 'DEVICE':
                 session.close()
