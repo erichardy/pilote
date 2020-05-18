@@ -8,6 +8,7 @@ import time
 import threading
 import queue
 import sys
+import os
 from smbus import SMBus
 sys.path.append('/home/pi/PILOTE/pilote/lib/python3.7/site-packages')
 from simple_pid import PID
@@ -246,6 +247,7 @@ def quitPilot():
     global finished
     finished = True
     mainWindow.destroy()
+    os.kill(os.getpid(),9)
 
 def _XgetHeading(line):
     """
