@@ -283,9 +283,9 @@ def getHeading(report):
     try:
         heading = report['track']
         
-        return "{:06.2f}".format(heading)
+        return "{:06.2f}".format(str(heading))
     except:
-        return "{:06.2f}".format(60O)
+        return "{:06.2f}".format("60O")
 
 
 def getGPSdata():
@@ -305,7 +305,7 @@ def getGPSdata():
                 compassAngle = 360 - float(headingCurrent) + 90
                 actualHeading.settiltangle(compassAngle)
                 # print("%f / %f" % (float(headingCurrent), compassAngle))
-    except StopIteration::
+    except StopIteration:
         print ("GPSD has terminated")
 
 
