@@ -11,6 +11,7 @@ import sys
 from smbus import SMBus
 sys.path.append('/home/pi/PILOTE/pilote/lib/python3.7/site-packages')
 from simple_pid import PID
+from gps import WATCH_ENABLE, gps
 
 # debugMode = True
 debugMode = False
@@ -246,7 +247,7 @@ def quitPilot():
     finished = True
     mainWindow.destroy()
 
-def getHeading(line):
+def _XgetHeading(line):
     """
     Cette fonction, telle qu'elle est, n'est utilisée que dans le cas de la simulation
     où le cap actuel est issus d'un fichier (GggppssX-11)
@@ -255,7 +256,7 @@ def getHeading(line):
     h = float(line.split('|')[2])
     return "{:06.2f}".format(h)
 
-def getGPSdata():
+def _XgetGPSdata():
     global headingCurrent
     global headingTarget
     print('getGPSdata started...')
@@ -276,6 +277,36 @@ def getGPSdata():
                 # print("%f / %f" % (float(headingCurrent), compassAngle))
                 time.sleep(2.80)
                 line = fp.readline()
+
+
+def getHeading(report):
+    try:
+        heading = report['track']
+        
+        return "{:06.2f}".format(heading)
+    except:
+        return "{:06.2f}".format(60O)
+
+
+def getGPSdata():
+    global headingCurrent
+    global headingTarget
+    session = gps(mode=WATCH_ENABLE)
+    try:
+        while True:
+            report = session.next()
+            if report['class'] == 'DEVICE':
+                session.close()
+                session = gps(mode=WATCH_ENABLE)
+            if report['class'] == 'TPV':
+                headingCurrent = getHeading(report)
+                currentHeading.config(text=headingCurrent)
+                # compassAngle : only for display compass on UI
+                compassAngle = 360 - float(headingCurrent) + 90
+                actualHeading.settiltangle(compassAngle)
+                # print("%f / %f" % (float(headingCurrent), compassAngle))
+    except StopIteration::
+        print ("GPSD has terminated")
 
 
 def updateTargetHeading(op, heading, val):
