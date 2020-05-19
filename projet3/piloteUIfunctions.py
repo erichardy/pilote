@@ -114,12 +114,10 @@ def baTri(params):
         targetHeading.config(text=headingTarget)
         desiredHeading.settiltangle(360 - float(headingTarget) + 90)
         print('Heading modified !')
-        
-        # q.put('
-        # q.put(('c', headingTarget))
     else:
         # if not in pilote mode, interract directly with actuator
-        q.put((params[0], params[1]))
+        MULTIPLIER = multiplierVal.get()
+        q.put((params[0], params[1] * MULTIPLIER))
 
 
 def sendAlert():
