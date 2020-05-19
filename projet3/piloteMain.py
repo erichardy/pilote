@@ -35,10 +35,10 @@ def __main__():
                                      daemon=False)
     userInterface.start()
 
-    manageAll = threading.Thread(target=manageALL,
-                                     name='manage_ALL',
+    manageQ = threading.Thread(target=manageQueue,
+                                     name='manage_Queue',
                                      daemon=False)
-    manageAll.start()
+    manageQ.start()
     manageGPS = threading.Thread(target=getGPSdata,
                              name='manageGPS',
                              daemon=False,

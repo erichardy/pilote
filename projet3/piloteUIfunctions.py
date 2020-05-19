@@ -16,6 +16,7 @@ from gps import WATCH_ENABLE, gps
 
 # debugMode = True
 debugMode = False
+tuningMode = True
 
 GPSstarted = True
 currentMode = str('manual')
@@ -35,11 +36,14 @@ currentHeading = Label(mainWindow,
 targetHeading = Label(mainWindow,
                       text="target Heading",
                       pady=2)
+
 quitButton = Button(mainWindow)
 compassDrawCanvas = Canvas(mainWindow)
 headingScreen = turtle.TurtleScreen(compassDrawCanvas)
 desiredHeading = turtle.RawTurtle(headingScreen)
 actualHeading = turtle.RawTurtle(headingScreen)
+
+
 tillerDouble = False
 finished = False
 
@@ -48,6 +52,7 @@ piloteCTL = PID(1, 1, 1, 0.0)
 
 MIN_ANGLE = 1
 MAX_ANGLE = 40
+MULTIPLIER = 1
 
 if debugMode:
     pidp = Spinbox(mainWindow)
@@ -56,6 +61,14 @@ if debugMode:
     pidpVal = DoubleVar(mainWindow)
     pidiVal = DoubleVar(mainWindow)
     piddVal = DoubleVar(mainWindow)
+
+if tuningMode:
+    minAngle = Spinbox(mainWindow)
+    maxAngle = Spinbox(mainWindow)
+    multiplier = Spinbox(mainWindow)
+    minAngleVal = DoubleVar(mainWindow)
+    maxAngleVal = DoubleVar(mainWindow)
+    multiplierVal = IntVar(mainWindow)
 
 q = queue.Queue()
 
@@ -117,17 +130,16 @@ def sendToADN(direction, value):
     the value must be adapted with the duration of the actuator movement,
     may be more than a multiplier...???
     """
-    # multiplier = XXX # to be defined ???
-    multiplier = 1
-    print("%s %i" % (direction, value * multiplier))
+    value= value * MULTIPLIER
+    print("%s %i" % (direction, value))
     if currentMode == 'pilote':
-        q.put((direction, value * multiplier))
+        q.put((direction, value))
     if tillerDouble:
         if direction == 't':
             direction = 'b'
         else:
             direction = 't'
-        q.put((direction, value * multiplier))
+        q.put((direction, value))
 
 
 
@@ -138,6 +150,7 @@ def getCorrection(target, current):
     return : a direction ('b' or 't') and a value to be sent to ADN
     """
     diff = target - current
+    print("%f %f %i" % (MIN_ANGLE, MAX_ANGLE, MULTIPLIER))
     # target and current closed => do nothing
     if abs(diff) <= MIN_ANGLE:
           return(True)
@@ -196,6 +209,9 @@ def changeModeCmd(p):
     global currentMode
     global headingCurrent
     global headingTarget
+    global MULTIPLIER
+    global MIN_ANGLE
+    global MAX_ANGLE
     bgPilote = "#FFD700"
     bgManual = "#FAFAD2"
     if currentMode == "manual":
@@ -205,6 +221,10 @@ def changeModeCmd(p):
         headingTarget = headingCurrent
         targetHeading.config(text=headingTarget)
         desiredHeading.settiltangle(360 - float(headingTarget) + 90)
+        #
+        MULTIPLIER = multiplierVal.get()
+        MIN_ANGLE = minAngleVal.get()
+        MAX_ANGLE = maxAngleVal.get()
         
         # q.put(('m', 'p'))
         # q.put(('c', headingTarget))
@@ -249,7 +269,7 @@ def quitPilot():
     mainWindow.destroy()
     os.kill(os.getpid(),9)
 
-def _XgetHeading(line):
+def getHeading(line):
     """
     Cette fonction, telle qu'elle est, n'est utilisée que dans le cas de la simulation
     où le cap actuel est issus d'un fichier (GggppssX-11)
@@ -258,7 +278,7 @@ def _XgetHeading(line):
     h = float(line.split('|')[2])
     return "{:06.2f}".format(h)
 
-def _XgetGPSdata():
+def getGPSdata():
     global headingCurrent
     global headingTarget
     print('getGPSdata started...')
@@ -281,7 +301,7 @@ def _XgetGPSdata():
                 line = fp.readline()
 
 
-def getHeading(report):
+def _XgetHeading(report):
     try:
         heading = report['track']
         
@@ -290,7 +310,7 @@ def getHeading(report):
         return "{:06.2f}".format(600.00)
 
 
-def getGPSdata():
+def _XgetGPSdata():
     global headingCurrent
     global headingTarget
     session = gps(mode=WATCH_ENABLE)
@@ -331,7 +351,7 @@ def updateTargetHeading(op, heading, val):
         newVal = (h + v) % 360.00
     return "{:06.2f}".format(newVal)
 
-
+"""
 def manageQueue():
     global q
     global started
@@ -339,3 +359,4 @@ def manageQueue():
     while started:
         msg = q.get()
         # print(msg)
+"""

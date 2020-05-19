@@ -118,6 +118,7 @@ def debugButtons():
                     text='P param')
     pidpLab.grid(column=0, row=4,
                  pady=5)
+    pidpVal = DoubleVar(value=2)
     pidp.config(text='P pid param',
                 textvariable=pidpVal,
                 from_=0,
@@ -125,6 +126,7 @@ def debugButtons():
                 increment=inc,
                 width=3,
                 )
+    
     pidp.grid(column=0, row=5)
     pidiLab = Label(mainWindow,
                     text='I param')
@@ -150,6 +152,49 @@ def debugButtons():
     pidd.grid(column=2, row=5)
     mainWindow.geometry('580x400+40+30')
 
+
+def tuningButtons():
+    global minAngleVal
+    global maxAngleVal
+    global multiplierVal
+    minAngleVal.set(1)
+    maxAngleVal.set(40)
+    multiplierVal.set(50)
+    minALab = Label(mainWindow,
+                    text='min Angle')
+    minALab.grid(column=0, row=4,
+                 pady=5)
+    minAngle.config(textvariable=minAngleVal,
+                    from_=0,
+                    to=20,
+                    increment=1,
+                    width=3)
+    minAngle.grid(column=0, row=5)
+    # pass
+    maxALab = Label(mainWindow,
+                    text='MAX Angle')
+    maxALab.grid(column=1, row=4,
+                 pady=5)
+    maxAngle.config(textvariable=maxAngleVal,
+                    from_=1,
+                    to=45,
+                    increment=1,
+                    width=3)
+    maxAngle.grid(column=1, row=5)
+    # pass
+    multiplierLab = Label(mainWindow,
+                    text='Multiplier')
+    multiplierLab.grid(column=2, row=4,
+                       pady=5)
+    multiplier.config(textvariable=multiplierVal,
+                    from_=1,
+                    to=999,
+                    increment=1,
+                    width=3)
+    multiplier.grid(column=2, row=5)
+    
+    
+    
 
 def compass():
     """
@@ -193,10 +238,12 @@ def initUI():
     compass()
     if debugMode:
         debugButtons()
+    if tuningMode:
+        tuningButtons()
 
     
-def manageALL():
-    print('manageALL() Started...')
+def manageQueue():
+    print('manageQueue() Started...')
     global q
     i = 0
     while 1:
@@ -205,9 +252,11 @@ def manageALL():
         msg = q.get()
         steering = ord(msg[0])
         angle = msg[1]
-        duration = angle * 50
+        # duration = angle * 50
+        duration = angle
         x_duration = "{:05}".format(duration)
         duration = [ord(d) for d in x_duration]
-        bus.write_block_data(addr, steering, duration)
         print ('.... %s' % (str(msg)))
+        bus.write_block_data(addr, steering, duration)
+        
 
