@@ -285,9 +285,9 @@ def getHeading(report):
     try:
         heading = report['track']
         
-        return "{:06.2f}".format(str(heading))
+        return "{:06.2f}".format(float(str(heading)))
     except:
-        return "{:06.2f}".format("60O")
+        return "{:06.2f}".format(600.00)
 
 
 def getGPSdata():
