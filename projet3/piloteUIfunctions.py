@@ -66,6 +66,11 @@ MIN_ANGLE = 1
 MAX_ANGLE = 40
 MULTIPLIER = 1
 
+# correction entre le mouvement babord et tribord car l'actuateurne se déplace
+# pas egalement pour t ou b
+# si > 1 : b = t * BT_CORRECTION
+BT_CORRECTION = 1.06
+
 if PIDTunigMode:
     pidp = Spinbox(mainWindow)
     pidi = Spinbox(mainWindow)
@@ -87,15 +92,16 @@ q = queue.Queue()
 
 def tillerDoubleSwitch(but):
     global tillerDouble
-    tillerDouble = not tillerDouble
+    
     if not tillerDouble:
         but.config(background='#9932CC',
                    activebackground='#9932CC',
-                   text='Single Tiller\nmovement')
+                   text='Désactiver Double\n Mouvement de barre')
     else:
         but.config(background='#FF8C00',
                    activebackground='#FF8C00',
-                   text='Double Tiller\nmovement')
+                   text='Activer Double\n Mouvement de barre')
+    tillerDouble = not tillerDouble
     
 
 def baTri(params):
@@ -128,8 +134,21 @@ def baTri(params):
         print('Heading modified !')
     else:
         # if not in pilote mode, interract directly with actuator
+        sendToADN(params[0], params[1])
+        """
         MULTIPLIER = multiplierVal.get()
-        q.put((params[0], params[1] * MULTIPLIER))
+        direction = params[0]
+        value = params[1] * MULTIPLIER
+        q.put((direction, value))
+        if tillerDouble:
+            if direction == 't':
+                direction = 'b'
+            else:
+                direction = 't'
+            time.sleep(value / 1000)
+            q.put((direction, value))
+        """
+        
 
 
 def sendAlert():
@@ -140,15 +159,16 @@ def sendToADN(direction, value):
     the value must be adapted with the duration of the actuator movement,
     may be more than a multiplier...???
     """
+    MULTIPLIER = multiplierVal.get()
     value= value * MULTIPLIER
-    print("%s %i" % (direction, value))
-    if currentMode == 'pilote':
-        q.put((direction, value))
+    print("SendToADN : %s %i" % (direction, value))
+    q.put((direction, value))
     if tillerDouble:
         if direction == 't':
             direction = 'b'
         else:
             direction = 't'
+        time.sleep(value / 1000)
         q.put((direction, value))
 
 
@@ -160,6 +180,9 @@ def getCorrection(target, current):
     return : a direction ('b' or 't') and a value to be sent to ADN
     """
     diff = target - current
+    
+    MIN_ANGLE = minAngleVal.get()
+    MAX_ANGLE = maxAngleVal.get()
     print("%f %f %i" % (MIN_ANGLE, MAX_ANGLE, MULTIPLIER))
     # target and current closed => do nothing
     if abs(diff) <= MIN_ANGLE:
@@ -208,8 +231,9 @@ def pilotePID():
         f_headingCurrent = float(headingCurrent)
         print("%f -+- %f" % (f_headingTarget,
                              f_headingCurrent))
-        getCorrection(f_headingTarget, f_headingCurrent)
-        print('-----')
+        if currentMode == 'pilote':
+            getCorrection(f_headingTarget, f_headingCurrent)
+            print('-----')
         time.sleep(1)
         if finished:
             return

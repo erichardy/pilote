@@ -84,10 +84,10 @@ def miscButtons():
     # button for double tiller movement : to change the heading
     # we must change the tiller angle and to restore it to its firts
     # position. Only use in pilote mode !
-    """
+    
     tillerDouble_button = Button(mainWindow)
-    tillerDouble_button.config(text='Double Tiller\nmovement',
-                        width=10,
+    tillerDouble_button.config(text='Activer Double\n Mouvement de barre',
+                        width=15,
                         height=2,
                         pady=3,
                         background='#FF8C00',
@@ -97,7 +97,7 @@ def miscButtons():
                         )
     tillerDouble_button.grid(column=2,
                              row=3)
-    """
+    
     w = '#FFFFFF'
     b = '#000000'
     quitButton.config(text='Quit !!',
@@ -157,9 +157,9 @@ def tuningButtons():
     global minAngleVal
     global maxAngleVal
     global multiplierVal
-    minAngleVal.set(1)
+    minAngleVal.set(5)
     maxAngleVal.set(40)
-    multiplierVal.set(50)
+    multiplierVal.set(100)
     minALab = Label(mainWindow,
                     text='min Angle')
     minALab.grid(column=0, row=4,
@@ -229,7 +229,7 @@ def initUI():
     # mainWindow = Tk() # Création de la fenêtre racine
     mainWindow.title('Pilote Automatique')
     mainWindow.config(background='#1E90FF')
-    mainWindow.geometry('580x300+40+30')
+    mainWindow.geometry('610x300+40+30')
 
     headingDisplays()
     # main command buttons
@@ -252,6 +252,9 @@ def manageQueue():
         msg = q.get()
         steering = ord(msg[0])
         angle = msg[1]
+        if msg[0] == 'b':
+            print("APPLIQUER CORRECTION %s" % (msg[0]))
+            angle = msg[1] * BT_CORRECTION
         # duration = angle * 50
         duration = angle
         x_duration = "{:05}".format(duration)
