@@ -109,14 +109,14 @@ def miscButtons():
     quitButton.grid(column=3, row=3)
 
 
-def debugButtons():
+def PIDTunningButtons():
     global pidpVal
     global pidiVal
     global piddVal
     inc = 5
     pidpLab = Label(mainWindow,
                     text='P param')
-    pidpLab.grid(column=0, row=4,
+    pidpLab.grid(column=0, row=6,
                  pady=5)
     pidpVal = DoubleVar(value=2)
     pidp.config(text='P pid param',
@@ -127,10 +127,10 @@ def debugButtons():
                 width=3,
                 )
     
-    pidp.grid(column=0, row=5)
+    pidp.grid(column=0, row=7)
     pidiLab = Label(mainWindow,
                     text='I param')
-    pidiLab.grid(column=1, row=4)
+    pidiLab.grid(column=1, row=6)
     pidi.config(text='I pid param',
                 textvariable=pidiVal,
                 from_=0,
@@ -138,10 +138,10 @@ def debugButtons():
                 increment=inc,
                 width=3,
                 )
-    pidi.grid(column=1, row=5)
+    pidi.grid(column=1, row=7)
     piddLab = Label(mainWindow,
                     text='D param')
-    piddLab.grid(column=2, row=4)
+    piddLab.grid(column=2, row=6)
     pidd.config(text='D pid param',
                 textvariable=piddVal,
                 from_=0,
@@ -149,7 +149,7 @@ def debugButtons():
                 increment=inc,
                 width=3,
                 )
-    pidd.grid(column=2, row=5)
+    pidd.grid(column=2, row=7)
     mainWindow.geometry('580x400+40+30')
 
 
@@ -236,8 +236,8 @@ def initUI():
     commandsButtons()
     miscButtons()
     compass()
-    if debugMode:
-        debugButtons()
+    if PIDTunigMode:
+        PIDTunningButtons()
     if tuningMode:
         tuningButtons()
 

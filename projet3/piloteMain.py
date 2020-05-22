@@ -27,6 +27,12 @@ import sys
 from piloteUI import *
 
 
+if args.s:
+    getGPSdata = getGPSdata_S
+else:
+    getGPSdata = getGPSdata_N
+
+
 
 def __main__():
     

@@ -9,14 +9,15 @@ import threading
 import queue
 import sys
 import os
+import argparse
 from smbus import SMBus
 sys.path.append('/home/pi/PILOTE/pilote/lib/python3.7/site-packages')
 from simple_pid import PID
 from gps import WATCH_ENABLE, gps
 
 # debugMode = True
-debugMode = False
-tuningMode = True
+# debugMode = False
+# PIDTunigMode = True
 
 GPSstarted = True
 currentMode = str('manual')
@@ -47,6 +48,17 @@ actualHeading = turtle.RawTurtle(headingScreen)
 tillerDouble = False
 finished = False
 
+# Args parser
+parser = argparse.ArgumentParser(description='Essais args ')
+parser.add_argument('-t', help='Tunnig mode', action="store_true")
+parser.add_argument('-p', help='PID tunning mode', action="store_true")
+parser.add_argument('-s', help='Simulation mode', action="store_true")
+
+args = parser.parse_args()
+PIDTunigMode = args.p
+tuningMode = args.t
+# END Args parser
+
 # pilote control
 piloteCTL = PID(1, 1, 1, 0.0)
 
@@ -54,7 +66,7 @@ MIN_ANGLE = 1
 MAX_ANGLE = 40
 MULTIPLIER = 1
 
-if debugMode:
+if PIDTunigMode:
     pidp = Spinbox(mainWindow)
     pidi = Spinbox(mainWindow)
     pidd = Spinbox(mainWindow)
@@ -267,16 +279,17 @@ def quitPilot():
     mainWindow.destroy()
     os.kill(os.getpid(),9)
 
-def getHeading(line):
-    """
-    Cette fonction, telle qu'elle est, n'est utilisée que dans le cas de la simulation
-    où le cap actuel est issus d'un fichier (GggppssX-11)
-    En situation réelle, ce sera le résultat de la requête à GPSD
-    """
-    h = float(line.split('|')[2])
-    return "{:06.2f}".format(h)
 
-def getGPSdata():
+def getGPSdata_S():
+    def getHeading(line):
+        """
+        Cette fonction, telle qu'elle est, n'est utilisée que dans le cas de la simulation
+        où le cap actuel est issus d'un fichier (GggppssX-11)
+        En situation réelle, ce sera le résultat de la requête à GPSD
+        """
+        h = float(line.split('|')[2])
+        return "{:06.2f}".format(h)
+
     global headingCurrent
     global headingTarget
     print('getGPSdata started...')
@@ -299,16 +312,18 @@ def getGPSdata():
                 line = fp.readline()
 
 
-def _XgetHeading(report):
-    try:
-        heading = report['track']
-        
-        return "{:06.2f}".format(float(str(heading)))
-    except:
-        return "{:06.2f}".format(600.00)
 
 
-def _XgetGPSdata():
+
+def getGPSdata_N():
+    def _XgetHeading(report):
+        try:
+            heading = report['track']
+            
+            return "{:06.2f}".format(float(str(heading)))
+        except:
+            return "{:06.2f}".format(600.00)
+    
     global headingCurrent
     global headingTarget
     session = gps(mode=WATCH_ENABLE)
