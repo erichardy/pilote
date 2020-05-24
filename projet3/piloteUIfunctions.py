@@ -336,11 +336,8 @@ def getGPSdata_S():
                 line = fp.readline()
 
 
-
-
-
 def getGPSdata_N():
-    def _XgetHeading(report):
+    def getHeading(report):
         try:
             heading = report['track']
             
