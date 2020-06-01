@@ -157,9 +157,9 @@ def tuningButtons():
     global minAngleVal
     global maxAngleVal
     global multiplierVal
-    minAngleVal.set(5)
-    maxAngleVal.set(40)
-    multiplierVal.set(100)
+    minAngleVal.set(MIN_ANGLE)
+    maxAngleVal.set(MAX_ANGLE)
+    multiplierVal.set(MULTIPLIER)
     minALab = Label(mainWindow,
                     text='min Angle')
     minALab.grid(column=0, row=4,

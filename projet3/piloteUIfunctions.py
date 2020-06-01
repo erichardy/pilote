@@ -62,9 +62,9 @@ tuningMode = args.t
 # pilote control
 piloteCTL = PID(1, 1, 1, 0.0)
 
-MIN_ANGLE = 1
+MIN_ANGLE = 8
 MAX_ANGLE = 40
-MULTIPLIER = 1
+MULTIPLIER = 100
 
 # correction entre le mouvement babord et tribord car l'actuateurne se déplace
 # pas egalement pour t ou b
@@ -88,6 +88,10 @@ if tuningMode:
     multiplierVal = IntVar(mainWindow)
 
 q = queue.Queue()
+
+# lastSendTime : time of the last command sent to ADN
+# is modified every send command (see sendToADN())
+lastSendTime = time.time()
 
 
 def tillerDoubleSwitch(but):
@@ -150,7 +154,6 @@ def baTri(params):
         """
         
 
-
 def sendAlert():
     print('ALERT ALERT ALERT !!!!!!')
 
@@ -159,8 +162,18 @@ def sendToADN(direction, value):
     the value must be adapted with the duration of the actuator movement,
     may be more than a multiplier...???
     """
+    global lastSendTime
+    currentTime = time.time()
+
     MULTIPLIER = multiplierVal.get()
-    value= value * MULTIPLIER
+    value = value * MULTIPLIER
+    # We must wait for last motor movement be completed
+    # delay = X sec
+    # value = Y msec
+    delay = currentTime - lastSendTime
+    if delay < (value / 1000):
+        time.sleep((value / 1000) - delay)
+        print("waiting for %f sec" % ((value / 1000) - delay))
     print("SendToADN : %s %i" % (direction, value))
     q.put((direction, value))
     if tillerDouble:
@@ -170,7 +183,7 @@ def sendToADN(direction, value):
             direction = 't'
         time.sleep(value / 1000)
         q.put((direction, value))
-
+    lastSendTime = time.time()
 
 
 def getCorrection(target, current):
@@ -209,9 +222,10 @@ def getCorrection(target, current):
             else:
                 direction = 'b'
                 sendToADN(direction, abs(360 + int(diff)))
-            
-          
 
+
+# misnamed function : PID is not used to compute the correction
+# ... may be in the future...
 def pilotePID():
     time.sleep(1)
     """
