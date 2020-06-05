@@ -5,6 +5,7 @@ from tkinter import *
 from functools import partial
 import turtle
 import time
+from math import sin, cos, atan2, radians, degrees
 import threading
 import queue
 import sys
@@ -305,21 +306,42 @@ def quitPilot():
     os.kill(os.getpid(),9)
 
 
+def meanAngle(listAngles):
+    """
+    Algo found at : https://rosettacode.org/wiki/Averages/Mean_angle
+    see also : https://stackoverflow.com/questions/491738/how-do-you-calculate-the-average-of-a-set-of-circular-data
+    https://en.wikipedia.org/wiki/Mean_of_circular_quantities
+    """
+    n = len(listAngles)
+    s = 0.0
+    c = 0.0
+    for i in range(0, n):
+        a = radians(listAngles[i])
+        s += sin(a)
+        c += cos(a)
+    angle = degrees(atan2(s / n, c / n))
+    if angle < 0:
+        return(angle + 360)
+    else:
+        return(angle)
+
+
 def newMeanHeading(headingRT):
     global headingSamples
     global headingAverageOK
-    print(headingSamples)
+    # print(headingSamples)
     nb_samples = samplesVal.get()
-    print("nb_samples %i" % (nb_samples))
+    # print("nb_samples %i" % (nb_samples))
     if len(headingSamples) < nb_samples:
         headingSamples.append(headingRT)
         headingAverageOK = False
         return 0.0
     else:
-        
+        # print(headingSamples)
+        nb_samples = samplesVal.get()
         del(headingSamples[0])
         headingSamples.append(headingRT)
-        headingAverage = sum(headingSamples) / nb_samples
+        headingAverage = meanAngle(headingSamples)
         headingAverageOK = True
         return headingAverage
 
@@ -337,10 +359,13 @@ def getGPSdata_S():
     global headingCurrent
     global headingTarget
     global headingSamples
+    headingSamples = []
     print('getGPSdata simul started...')
-    time.sleep(1)
+    time.sleep(2)
     while 1:
         if finished:
+            headingSamples = []
+            break
             return
         gpsDataFile = '../misc_tests/GggppssX-11'
         with open(gpsDataFile) as fp:
@@ -352,7 +377,7 @@ def getGPSdata_S():
                     return
                 headingRealTime = getHeading(line)
                 headingCurrent = newMeanHeading(float(headingRealTime))
-                currentHeading.config(text=headingCurrent)
+                currentHeading.config(text="{:06.2f}".format(headingCurrent))
                 realTimeHeading.config(text=headingRealTime)
                 # compassAngle : only for display compass on UI
                 compassAngle = 360 - float(headingCurrent) + 90
@@ -389,7 +414,7 @@ def getGPSdata_N():
             if report['class'] == 'TPV':
                 headingRealTime = getHeading(report)
                 headingCurrent = newMeanHeading(float(headingRealTime))
-                currentHeading.config(text=headingCurrent)
+                currentHeading.config(text="{:06.2f}".format(headingCurrent))
                 realTimeHeading.config(text=headingRealTime)
                 # compassAngle : only for display compass on UI
                 compassAngle = 360 - float(headingCurrent) + 90
