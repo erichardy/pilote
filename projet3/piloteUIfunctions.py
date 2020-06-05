@@ -24,6 +24,9 @@ currentMode = str('manual')
 
 headingCurrent = '0.0'
 headingTarget = '0.0'
+# headingAverage will become True when NB SAMPLES aquired
+headingAverageOK = False
+headingSamples = []
 
 # global variables for UI widjets
 mainWindow = Tk()
@@ -302,6 +305,25 @@ def quitPilot():
     os.kill(os.getpid(),9)
 
 
+def newMeanHeading(headingRT):
+    global headingSamples
+    global headingAverageOK
+    print(headingSamples)
+    nb_samples = samplesVal.get()
+    print("nb_samples %i" % (nb_samples))
+    if len(headingSamples) < nb_samples:
+        headingSamples.append(headingRT)
+        headingAverageOK = False
+        return 0.0
+    else:
+        
+        del(headingSamples[0])
+        headingSamples.append(headingRT)
+        headingAverage = sum(headingSamples) / nb_samples
+        headingAverageOK = True
+        return headingAverage
+
+
 def getGPSdata_S():
     def getHeading(line):
         """
@@ -314,7 +336,9 @@ def getGPSdata_S():
 
     global headingCurrent
     global headingTarget
-    print('getGPSdata started...')
+    global headingSamples
+    print('getGPSdata simul started...')
+    time.sleep(1)
     while 1:
         if finished:
             return
@@ -323,9 +347,13 @@ def getGPSdata_S():
             line = fp.readline()
             while line:
                 if finished:
+                    headingSamples = []
+                    break
                     return
-                headingCurrent = getHeading(line)
+                headingRealTime = getHeading(line)
+                headingCurrent = newMeanHeading(float(headingRealTime))
                 currentHeading.config(text=headingCurrent)
+                realTimeHeading.config(text=headingRealTime)
                 # compassAngle : only for display compass on UI
                 compassAngle = 360 - float(headingCurrent) + 90
                 actualHeading.settiltangle(compassAngle)
@@ -345,10 +373,14 @@ def getGPSdata_N():
     
     global headingCurrent
     global headingTarget
+    global headingSamples
+    time.sleep(1)
     session = gps(mode=WATCH_ENABLE)
     try:
         while True:
             if finished:
+                headingSamples = []
+                break
                 return
             report = session.next()
             if report['class'] == 'DEVICE':
@@ -356,13 +388,13 @@ def getGPSdata_N():
                 session = gps(mode=WATCH_ENABLE)
             if report['class'] == 'TPV':
                 headingRealTime = getHeading(report)
-                # headingCurrent = ....
-                # currentHeading.config(text=headingCurrent)
+                headingCurrent = newMeanHeading(float(headingRealTime))
+                currentHeading.config(text=headingCurrent)
                 realTimeHeading.config(text=headingRealTime)
                 # compassAngle : only for display compass on UI
                 compassAngle = 360 - float(headingCurrent) + 90
                 actualHeading.settiltangle(compassAngle)
-                # print("%f / %f" % (float(headingCurrent), compassAngle))
+                print("%f / %f" % (float(headingCurrent), compassAngle))
     except StopIteration:
         print ("GPSD has terminated")
 
