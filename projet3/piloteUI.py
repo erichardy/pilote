@@ -17,6 +17,12 @@ addr = 0x8 # bus address
 bus = SMBus(1) # indicates /dev/ic2-1
 
 def commandsButtons():
+    """
+    Main interface : two functions are called :
+    baTri : send direct commands to actuator if manual mode
+            or change headingTarget if pilote mode
+    changeModeCmd : switch beetween manual and pilote mode.
+    """
     buttons = []
     buttons.append(babord5)
     buttons.append(babord1)    
@@ -63,24 +69,12 @@ def commandsButtons():
 def headingDisplays():
     # labels for heading display
     currentHeading.grid(column=2, row=0)
+    realTimeHeading.grid(column=3, row=0)
     targetHeading.grid(column=2, row=2)
 
 def miscButtons():
     # misc buttons
-    """
-    startGPS_button = Button(mainWindow)
-    startGPS_button.config(text='Start GPS...',
-                        width=10,
-                        height=2,
-                        pady=3,
-                        background='#FF8C00',
-                        activebackground='#FF8C00',
-                        foreground='#FFFFFF',
-                        command=partial(startStopGPS, startGPS_button),
-                        )
-    startGPS_button.grid(column=2,
-                      row=3)
-    """
+
     # button for double tiller movement : to change the heading
     # we must change the tiller angle and to restore it to its firts
     # position. Only use in pilote mode !
@@ -108,7 +102,8 @@ def miscButtons():
                       command=partial(quitPilot))
     quitButton.grid(column=3, row=3)
 
-
+"""
+Not used
 def PIDTunningButtons():
     global pidpVal
     global pidiVal
@@ -151,6 +146,7 @@ def PIDTunningButtons():
                 )
     pidd.grid(column=2, row=7)
     mainWindow.geometry('580x400+40+30')
+"""
 
 
 def tuningButtons():
@@ -160,6 +156,7 @@ def tuningButtons():
     minAngleVal.set(MIN_ANGLE)
     maxAngleVal.set(MAX_ANGLE)
     multiplierVal.set(MULTIPLIER)
+    samplesVal.set(SAMPLES)
     minALab = Label(mainWindow,
                     text='min Angle')
     minALab.grid(column=0, row=4,
@@ -192,6 +189,28 @@ def tuningButtons():
                     increment=1,
                     width=3)
     multiplier.grid(column=2, row=5)
+    # pass
+    samplesLab = Label(mainWindow,
+                    text='NB Smaples')
+    samplesLab.grid(column=3, row=4,
+                       pady=5)
+    samples.config(textvariable=samplesVal,
+                    from_=1,
+                    to=20,
+                    increment=1,
+                    width=3)
+    samples.grid(column=3, row=5)
+    # 
+    flipTillerCmds.config(text='Inverse\nMvt Barre',
+                          width=10,
+                          height=2,
+                          pady=3,
+                          background='#0000FF',
+                          activebackground='#FF0000',
+                          foreground='#FFFFFF',
+                          command=partial(flipTillerCommands)
+                          )
+    flipTillerCmds.grid(column=4, row=3)
     
     
     
@@ -236,8 +255,10 @@ def initUI():
     commandsButtons()
     miscButtons()
     compass()
+    """
     if PIDTunigMode:
         PIDTunningButtons()
+    """
     if tuningMode:
         tuningButtons()
 

@@ -12,7 +12,7 @@ import os
 import argparse
 from smbus import SMBus
 sys.path.append('/home/pi/PILOTE/pilote/lib/python3.7/site-packages')
-from simple_pid import PID
+# from simple_pid import PID
 from gps import WATCH_ENABLE, gps
 
 # debugMode = True
@@ -32,8 +32,11 @@ babord1 = Button(mainWindow)
 changeMode = Button(mainWindow)
 tribord1 = Button(mainWindow)
 tribord5 = Button(mainWindow)
+
 currentHeading = Label(mainWindow,
                        text="current Heading")
+realTimeHeading = Label(mainWindow,
+                    text="Real Time Heading")
 targetHeading = Label(mainWindow,
                       text="target Heading",
                       pady=2)
@@ -60,13 +63,14 @@ tuningMode = args.t
 # END Args parser
 
 # pilote control
-piloteCTL = PID(1, 1, 1, 0.0)
+# piloteCTL = PID(1, 1, 1, 0.0)
 
 MIN_ANGLE = 8
 MAX_ANGLE = 40
 MULTIPLIER = 100
+SAMPLES = 6
 
-# correction entre le mouvement babord et tribord car l'actuateurne se déplace
+# correction entre le mouvement babord et tribord car l'actuateur ne se déplace
 # pas egalement pour t ou b
 # si > 1 : b = t * BT_CORRECTION
 BT_CORRECTION = 1.06
@@ -80,12 +84,26 @@ if PIDTunigMode:
     piddVal = DoubleVar(mainWindow)
 
 if tuningMode:
+    # minAngle : trigger, move the tiller if delta beetween currentHeading
+    # and targetHeading is grater this value 
     minAngle = Spinbox(mainWindow)
+    # maxAngle : if delta if grater this value, !!!PROBLEM!!!
     maxAngle = Spinbox(mainWindow)
+    # multipier : factor to angle for convertion of the angle
+    # to duration movement of the tiller
     multiplier = Spinbox(mainWindow)
+    # samples : number of samples used to compute mean heading
+    samples = Spinbox(mainWindow)
+    # flipTillerCmds : 'b' becomes 't' and 't' becomes 'b'
+    # for test purposes
+    flipTillerCmds = Button(mainWindow)
+    
     minAngleVal = DoubleVar(mainWindow)
     maxAngleVal = DoubleVar(mainWindow)
     multiplierVal = IntVar(mainWindow)
+    samplesVal = IntVar(mainWindow)
+    flipTiller = False
+    
 
 q = queue.Queue()
 
@@ -111,22 +129,20 @@ def tillerDoubleSwitch(but):
 def baTri(params):
     """
     Change direction : babord / Tribord
-    If in pilote mode : use of PID controler...
+    If in pilote mode :
         display the new target heading in UI : the new target heading depends of
         the current target and the command received in params,
         and modify the target heading : headingTarget variable
-        The PID controler must use this new parameter
+        !!! NB : the global variable headingTarget is updated !!!
     If in manual mode : send command to change the tiller angle
+    or heading if tillerDouble is True
     :params: params is a tuple ('b|t', 1|5)
         b = babord
         t = tribord
         1 = 1°
         5 = 5°
-    !!! NB : the global variable headingTarget is updated !!!
     """
-    # print(params)
     global headingTarget
-    # global targetHeading
     if currentMode == 'pilote':
         if params[0] == 'b':
             newTarget = updateTargetHeading('a', headingTarget, params[1])
@@ -139,19 +155,6 @@ def baTri(params):
     else:
         # if not in pilote mode, interract directly with actuator
         sendToADN(params[0], params[1])
-        """
-        MULTIPLIER = multiplierVal.get()
-        direction = params[0]
-        value = params[1] * MULTIPLIER
-        q.put((direction, value))
-        if tillerDouble:
-            if direction == 't':
-                direction = 'b'
-            else:
-                direction = 't'
-            time.sleep(value / 1000)
-            q.put((direction, value))
-        """
         
 
 def sendAlert():
@@ -159,8 +162,9 @@ def sendAlert():
 
 def sendToADN(direction, value):
     """
-    the value must be adapted with the duration of the actuator movement,
-    may be more than a multiplier...???
+    direction is 'b' ot 't', but ca be reversed if flipTiller is True
+    the value is an angle and is transformed to a duration of the actuator
+    movement by MULTIPLIER
     """
     global lastSendTime
     currentTime = time.time()
@@ -174,6 +178,14 @@ def sendToADN(direction, value):
     if delay < (value / 1000):
         time.sleep((value / 1000) - delay)
         print("waiting for %f sec" % ((value / 1000) - delay))
+    #
+    # below, we are in the case of tests reverse tiller movement...
+    if (currentMode == 'pilote') and flipTiller:
+        if direction == 't':
+            direction = 'b'
+        else:
+            direction = 't'
+    #
     print("SendToADN : %s %i" % (direction, value))
     q.put((direction, value))
     if tillerDouble:
@@ -186,11 +198,12 @@ def sendToADN(direction, value):
     lastSendTime = time.time()
 
 
-def getCorrection(target, current):
+def doCorrection(target, current):
     """
     target : float
     current : float
-    return : a direction ('b' or 't') and a value to be sent to ADN
+    return : nothing
+    call sendToADN() function with a direction ('b', 't') and an angle
     """
     diff = target - current
     
@@ -226,7 +239,7 @@ def getCorrection(target, current):
 
 # misnamed function : PID is not used to compute the correction
 # ... may be in the future...
-def pilotePID():
+def piloteAuto():
     time.sleep(1)
     """
     piloteCTL.set_auto_mode(True)
@@ -246,7 +259,7 @@ def pilotePID():
         print("%f -+- %f" % (f_headingTarget,
                              f_headingCurrent))
         if currentMode == 'pilote':
-            getCorrection(f_headingTarget, f_headingCurrent)
+            doCorrection(f_headingTarget, f_headingCurrent)
             print('-----')
         time.sleep(1)
         if finished:
@@ -273,42 +286,13 @@ def changeModeCmd(p):
         MULTIPLIER = multiplierVal.get()
         MIN_ANGLE = minAngleVal.get()
         MAX_ANGLE = maxAngleVal.get()
-        
-        # q.put(('m', 'p'))
-        # q.put(('c', headingTarget))
     else:
         bg = bgManual
         txt = 'Passer en\nPilote Auto'
         currentMode = 'manual'
-        # q.put(('m', 'm'))
     changeMode.config(background=bg,
                       activebackground=bg,
                       text=txt)
-
-def startStopGPS(but):
-    global GPSstarted
-    if not GPSstarted:
-        but.config(background='#9932CC',
-                   activebackground='#9932CC',
-                   text='Stop GPS!')
-        GPSstarted = True
-        startGPS.set()
-        """
-        manageGPS = threading.Thread(target=getGPSdata,
-                             name='manageGPS',
-                             daemon=True)
-        """
-        # manageGPS.start()
-        print('started...')
-    else:
-        GPSstarted = False
-        startGPS.clear()
-        if currentMode != "manual":
-            changeModeCmd(None)
-        but.config(background='#FF8C00',
-                   activebackground='#FF8C00',
-                   text='Start GPS...')
-        print('GPS Stopped .')
 
 
 def quitPilot():
@@ -371,8 +355,10 @@ def getGPSdata_N():
                 session.close()
                 session = gps(mode=WATCH_ENABLE)
             if report['class'] == 'TPV':
-                headingCurrent = getHeading(report)
-                currentHeading.config(text=headingCurrent)
+                headingRealTime = getHeading(report)
+                # headingCurrent = ....
+                # currentHeading.config(text=headingCurrent)
+                realTimeHeading.config(text=headingRealTime)
                 # compassAngle : only for display compass on UI
                 compassAngle = 360 - float(headingCurrent) + 90
                 actualHeading.settiltangle(compassAngle)
@@ -399,12 +385,17 @@ def updateTargetHeading(op, heading, val):
         newVal = (h + v) % 360.00
     return "{:06.2f}".format(newVal)
 
-"""
-def manageQueue():
-    global q
-    global started
-    i = 0
-    while started:
-        msg = q.get()
-        # print(msg)
-"""
+
+def flipTillerCommands():
+    global flipTiller
+    if not flipTiller:
+        flipTillerCmds.config(background='#FF0000',
+                              activebackground='#0000FF',
+                              text='Mvt Barre\nInversé !')
+    else:
+        flipTillerCmds.config(background='#0000FF',
+                              activebackground='#FF0000',
+                              text='Inverse\nMvt Barre')
+    flipTiller = not flipTiller
+    print(flipTiller)
+
